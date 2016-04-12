@@ -1,8 +1,25 @@
-// Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
-// for more guidance on F# programming.
+#r @"..\..\packages\Neo4jClient\lib\net45\Neo4jClient.dll"
 
-#load "Library.fs"
+#load "Cypher.fs"
+      "Interpreter.fs"
+
 open Neo4jClient.FsQuotations
 
-let num = Library.hello 42
-printfn "%i" num
+type UserNode =
+    { FacebookId: string }
+    interface ICypherNode
+
+type IsResidentOf() =
+    interface ICypherRelationship
+
+type HouseholdNode =
+    { Name: string }
+    interface ICypherNode
+
+let readQuery =
+    <@
+    let u = declareNode<UserNode>()
+    matchRelation u (declareRelationship<IsResidentOf>()) (declareNode<HouseholdNode>())
+    where (u.FacebookId = "12345")
+    returnResults u
+    @>
