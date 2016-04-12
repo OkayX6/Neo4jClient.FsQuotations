@@ -1,0 +1,25 @@
+type project
+title
+    ##ProjectName##
+owners
+    Denis Ok
+authors 
+    Denis Ok
+projectUrl
+    http://github.com/OkayX6/Neo4jClient.FsQuotations
+iconUrl
+    https://raw.githubusercontent.com/OkayX6/Neo4jClient.FsQuotations/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/OkayX6/Neo4jClient.FsQuotations/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    F# Neo4j
+summary
+    Neo4jClient with F# quotations
+description
+    Neo4jClient with F# quotations
+
+

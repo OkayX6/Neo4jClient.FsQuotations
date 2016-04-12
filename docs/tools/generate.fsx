@@ -11,17 +11,17 @@
 // (This is the original behaviour of ProjectScaffold prior to multi project support)
 let referenceBinaries = []
 // Web site location for the generated documentation
-let website = "/##ProjectName##"
+let website = "/Neo4jClient.FsQuotations"
 
-let githubLink = "http://github.com/##GitHome##/##GitName##"
+let githubLink = "http://github.com/OkayX6/Neo4jClient.FsQuotations"
 
 // Specify more information about your project
 let info =
-  [ "project-name", "##ProjectName##"
-    "project-author", "##Author##"
-    "project-summary", "##Summary##"
+  [ "project-name", "Neo4jClient.FsQuotations"
+    "project-author", "Denis Ok"
+    "project-summary", "Neo4jClient with F# quotations"
     "project-github", githubLink
-    "project-nuget", "http://nuget.org/packages/##ProjectName##" ]
+    "project-nuget", "http://nuget.org/packages/Neo4jClient.FsQuotations" ]
 
 // --------------------------------------------------------------------------------------
 // For typical project, no changes are needed below

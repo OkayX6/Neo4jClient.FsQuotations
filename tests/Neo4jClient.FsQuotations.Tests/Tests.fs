@@ -1,6 +1,6 @@
-﻿module FSharp.ProjectScaffold.Tests
+module Neo4jClient.FsQuotations.Tests
 
-open FSharp.ProjectTemplate
+open Neo4jClient.FsQuotations
 open NUnit.Framework
 
 [<Test>]
