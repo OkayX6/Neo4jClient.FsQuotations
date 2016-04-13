@@ -10,23 +10,6 @@ let neo4jClient =
     client.Connect()
     client
 
-[<AutoOpen>]
-module TestDomainModels =
-    [<CLIMutable>]
-    type UserNode = 
-        { FacebookId: string }
-        interface INeo4jNode
-
-    [<CLIMutable>]
-    type IsResidentOf =
-        { CustomHouseholdName: string }
-        interface INeo4jRelationship
-
-    [<CLIMutable>]
-    type HouseholdNode = 
-        { Name: string }
-        interface INeo4jNode
-
 [<Test>]
 let ``Get all nodes with specific label`` () =
     // Read queries
