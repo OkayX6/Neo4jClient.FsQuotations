@@ -26,6 +26,10 @@ let ``Get all nodes with specific label`` () =
     let results =
         query
         |> executeReadQuery<UserNode> neo4jClient.Cypher
-        |> Seq.toArray
+        |> Seq.map (fun user -> user.FacebookId)
+        |> Set.ofSeq
 
-    Assert.AreEqual(4, results.Length, "Number of results")
+    Assert.AreEqual(
+        set [ "Denis"; "TT"; "Opwal"; "Chouchou" ],
+        results,
+        "Get all user nodes")

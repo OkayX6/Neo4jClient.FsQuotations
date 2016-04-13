@@ -21,10 +21,10 @@ type HouseholdNode =
 
 let initDbWithTestData (client: GraphClient) =
     // prepare data for tests
-    let userDenis = { FacebookId = "12345" }
-    let userTT = { FacebookId = "45678" }
-    let userOpwal = { FacebookId = "67890" }
-    let userChou2 = { FacebookId = "FbChouchou" }
+    let userDenis = { FacebookId = "Denis" }
+    let userTT = { FacebookId = "TT" }
+    let userOpwal = { FacebookId = "Opwal" }
+    let userChou2 = { FacebookId = "Chouchou" }
 
     let householdColocJoie = { Name = "Coloc de la Joie" }
     let householdColoCarrouf = { Name = "Colocarouf" }
@@ -36,14 +36,6 @@ let initDbWithTestData (client: GraphClient) =
             .Create(sprintf "(node:%s {nodeParam})" nodeTypeName)
             .WithParam("nodeParam", node)
             .ExecuteWithoutResults()
-
-//    let inline mergeNode (node: 'T when 'T :> ICypherNode) =
-//        let nodeTypeName = typeof<'T>.Name
-//        client
-//            .Cypher
-//            .Merge(sprintf "(node:%s {nodeParam})" nodeTypeName)
-//            .WithParam("nodeParam", node)
-//            .ExecuteWithoutResults()
     
     let clearAllNodes () =
         client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
