@@ -7,8 +7,6 @@ open Neo4jClient.Cypher
 type Neo4jKeyAttribute() =
     inherit Attribute()
 
-type INeo4jRelationship = interface end
-
 type NodeMatch<'TKey> = 
     { Key : 'TKey
       TypeInfo : Type }

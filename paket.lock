@@ -10,7 +10,7 @@ NUGET
     Neo4jClient (1.1.0.34)
       Microsoft.Net.Http (>= 2.0.20710)
       Newtonsoft.Json (>= 6.0.3)
-    Newtonsoft.Json (8.0.3)
+    Newtonsoft.Json (6.0.8)
 
 GROUP Build
 NUGET

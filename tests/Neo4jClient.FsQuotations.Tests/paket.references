@@ -1,4 +1,5 @@
 Neo4jClient
+Newtonsoft.Json
 group Test
 NUnit
 NUnit.Runners

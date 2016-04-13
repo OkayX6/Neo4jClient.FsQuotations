@@ -1,5 +1,6 @@
 source https://nuget.org/api/v2
 nuget Neo4jClient
+nuget Newtonsoft.Json ~> 6.0
 
 group Build
   source https://nuget.org/api/v2
