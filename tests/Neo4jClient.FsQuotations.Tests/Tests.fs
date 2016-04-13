@@ -10,6 +10,9 @@ let neo4jClient =
     client.Connect()
     client
 
+[<SetUp>]
+let setupDbWithTestData () = initDbWithTestData neo4jClient
+
 [<Test>]
 let ``Get all nodes with specific label`` () =
     // Read queries
