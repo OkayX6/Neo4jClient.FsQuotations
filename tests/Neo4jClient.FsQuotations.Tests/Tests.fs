@@ -51,3 +51,20 @@ let ``MATCH-WHERE-RETURN with equality`` () =
 
     Assert.AreEqual(1, results.Length, "Number of results")
     Assert.AreEqual("Denis", results.[0], "Facebook ID")
+
+[<Test>]
+let ``match relations`` () =
+    let query =
+        <@
+        let user = declareNode<UserNode>
+        let household = declareNode<HouseholdNode>
+        matchRelation user declareRelationship<IsResidentOf> household
+        returnResults (user, household)
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.toArray
+
+    Assert.AreEqual(1, results.Length, "Number of results")
