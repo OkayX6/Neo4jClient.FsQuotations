@@ -15,7 +15,6 @@ let setupDbWithTestData () = initDbWithTestData neo4jClient
 
 [<Test>]
 let ``Get all nodes with specific label`` () =
-    // Read queries
     let query =
         <@
         let u = declareNode<UserNode>()
@@ -33,3 +32,22 @@ let ``Get all nodes with specific label`` () =
         set [ "Denis"; "TT"; "Opwal"; "Chouchou" ],
         results,
         "Get all user nodes")
+
+[<Test>]
+let ``MATCH-WHERE-RETURN with equality`` () =
+    let query =
+        <@
+        let u = declareNode<UserNode>()
+        matchNode u
+        where (u.FacebookId = "Denis")
+        returnResults u
+        @>
+
+    let results =
+        query
+        |> executeReadQuery<UserNode> neo4jClient.Cypher
+        |> Seq.map (fun user -> user.FacebookId)
+        |> Seq.toArray
+
+    Assert.AreEqual(1, results.Length, "Number of results")
+    Assert.AreEqual("Denis", results.[0], "Facebook ID")

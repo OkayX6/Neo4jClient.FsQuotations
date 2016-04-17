@@ -37,9 +37,12 @@ let initDbWithTestData (client: GraphClient) =
             .WithParam("nodeParam", node)
             .ExecuteWithoutResults()
     
+    let clearAllRelations () =
+        client.Cypher.Match("()-[r]->()").Delete("r").ExecuteWithoutResults()
     let clearAllNodes () =
         client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
 
+    clearAllRelations ()
     clearAllNodes ()
 
     createNode userDenis
