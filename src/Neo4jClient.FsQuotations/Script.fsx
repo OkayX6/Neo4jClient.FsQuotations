@@ -82,7 +82,7 @@ do
 // Read queries
 let getSpecificNodeQuery =
     <@
-    let u = declareNode<UserNode>()
+    let u = declareNode<UserNode>
     matchNode u
     where (u.FacebookId = "12345")
     returnResults u
@@ -98,20 +98,9 @@ open Neo4jClient.Cypher
 
 let (Let(_, _, getExpr)) =
     <@
-        let u = declareNode<UserNode>()
+        let u = declareNode<UserNode>
         where (u.FacebookId = "123")
     @>
-
-let (|WhereClause|_|) q =
-    match q with
-    | SpecificCall <@ where @> (_targetObj, _types, [arg])
-        ->
-            match arg with
-            | BinaryExpr(op, arg1, arg2) -> Some (op, arg1, arg2)
-            | _ -> None
-    | _ -> None
-
-(|WhereClause|_|) getExpr
 
 client.Cypher
     .Match("(u: UserNode)")

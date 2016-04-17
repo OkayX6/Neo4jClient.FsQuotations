@@ -17,7 +17,7 @@ let setupDbWithTestData () = initDbWithTestData neo4jClient
 let ``Get all nodes with specific label`` () =
     let query =
         <@
-        let u = declareNode<UserNode>()
+        let u = declareNode<UserNode>
         matchNode u
         returnResults u
         @>
@@ -37,7 +37,7 @@ let ``Get all nodes with specific label`` () =
 let ``MATCH-WHERE-RETURN with equality`` () =
     let query =
         <@
-        let u = declareNode<UserNode>()
+        let u = declareNode<UserNode>
         matchNode u
         where (u.FacebookId = "Denis")
         returnResults u

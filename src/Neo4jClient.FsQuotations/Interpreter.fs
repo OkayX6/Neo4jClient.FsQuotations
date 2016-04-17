@@ -29,9 +29,8 @@ module CypherQueryGrammar =
     ///
     /// ## Type parameters
     ///  - `'T` - the type of the node
-    let declareNode<'T when 'T :> INeo4jNode> () = Unchecked.defaultof<'T>
-
-    let declareRelationship<'T when 'T :> INeo4jRelationship> () = Unchecked.defaultof<'T>
+    let declareNode<'T when 'T :> INeo4jNode> = Unchecked.defaultof<'T>
+    let declareRelationship<'T when 'T :> INeo4jRelationship> = Unchecked.defaultof<'T>
 
     /// Matches a node with a specific type like: "MATCH (n: 'T)"
     ///
@@ -135,7 +134,6 @@ module QuotationInterpreter =
         match returnExpr with
         | Var v ->
             printfn "Return var: %s (type: %s)" v.Name v.Type.Name
-
             cypher.Return(sprintf "%s" v.Name).Results
 
         | _ -> unhandledExpr returnExpr
