@@ -24,7 +24,7 @@ let ``Get all nodes with specific label`` () =
 
     let results =
         query
-        |> executeReadQuery<UserNode> neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Set.ofSeq
 
@@ -45,7 +45,7 @@ let ``MATCH-WHERE-RETURN with equality`` () =
 
     let results =
         query
-        |> executeReadQuery<UserNode> neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Seq.toArray
 

@@ -173,24 +173,27 @@ module QuotationInterpreter =
         | _ -> unhandledExpr q
 
     // TODO denisok: give a nice and typed expression
-    let rec executeReadQuery<'T> (cypher: ICypherFluentQuery) (query: Expr): seq<'T> =
-        match query with
-        | Let(var, expr, rest) when var.Name.Length > 0 ->
-            match expr with
-            | DeclareNodeCall ->
-                printfn "Declare node: %s (type: %s)" var.Name var.Type.Name
-                match rest with
-                | Let(_) -> executeReadQuery<'T> cypher rest
-                | _ -> executeMatch cypher rest
-            | Patterns.Call(None, methodInfo, []) when methodInfo.Name = "declareNode" ->
-                printfn "Declare relationship: %s (type: %s)" var.Name var.Type.Name
-                match rest with
-                | Let(_) -> executeReadQuery cypher rest
-                | _ -> executeMatch cypher rest
+    let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
+        let rec impl cypher (query: Expr) =
+            match query with
+            | Let(var, expr, rest) when var.Name.Length > 0 ->
+                match expr with
+                | DeclareNodeCall ->
+                    printfn "Declare node: %s (type: %s)" var.Name var.Type.Name
+                    match rest with
+                    | Let(_) -> impl cypher rest
+                    | _ -> executeMatch cypher rest
+                | Patterns.Call(None, methodInfo, []) when methodInfo.Name = "declareNode" ->
+                    printfn "Declare relationship: %s (type: %s)" var.Name var.Type.Name
+                    match rest with
+                    | Let(_) -> impl cypher rest
+                    | _ -> executeMatch cypher rest
 
-            | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
-        | Let(_) -> failwith "Invalid 'let' expression: bounded value must have a name"
-        | _ -> unhandledExpr query
+                | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
+            | Let(_) -> failwith "Invalid 'let' expression: bounded value must have a name"
+            | _ -> unhandledExpr query
+
+        impl cypher query
 
 
 /// Documentation for my library

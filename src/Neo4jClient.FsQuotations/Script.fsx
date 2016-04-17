@@ -114,7 +114,8 @@ client.Cypher
     .Results
 
 let res =
-    executeReadQuery<UserNode> client.Cypher getSpecificNodeQuery
+    getSpecificNodeQuery
+    |> executeReadQuery client.Cypher 
     |> Seq.toArray
 
 //let readQuery =
