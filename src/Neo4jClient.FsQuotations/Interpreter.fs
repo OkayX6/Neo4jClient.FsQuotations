@@ -172,7 +172,6 @@ module QuotationInterpreter =
 
         | _ -> unhandledExpr q
 
-    // TODO denisok: give a nice and typed expression
     let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
         let rec impl cypher (query: Expr) =
             match query with
@@ -194,19 +193,3 @@ module QuotationInterpreter =
             | _ -> unhandledExpr query
 
         impl cypher query
-
-
-/// Documentation for my library
-///
-/// ## Example
-///
-///     let h = Library.hello 1
-///     printfn "%d" h
-
-//type CypherReadQueryStateChecker =
-//    {
-//        NodeMatches: Dictionary<string, string>
-//    }
-//
-//    member x.AddNode(name: string, typeName: string) =
-//        match x.NodeMatches.TryGetValue(name) with

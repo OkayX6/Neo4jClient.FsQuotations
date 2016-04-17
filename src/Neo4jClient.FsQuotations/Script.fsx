@@ -44,18 +44,13 @@ do
             .Create(sprintf "(node:%s {nodeParam})" nodeTypeName)
             .WithParam("nodeParam", node)
             .ExecuteWithoutResults()
-
-//    let inline mergeNode (node: 'T when 'T :> ICypherNode) =
-//        let nodeTypeName = typeof<'T>.Name
-//        client
-//            .Cypher
-//            .Merge(sprintf "(node:%s {nodeParam})" nodeTypeName)
-//            .WithParam("nodeParam", node)
-//            .ExecuteWithoutResults()
     
+    let clearAllRelations () =
+        client.Cypher.Match("()-[r]->()").Delete("r").ExecuteWithoutResults()
     let clearAllNodes () =
         client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
 
+    clearAllRelations ()
     clearAllNodes ()
 
     createNode userDenis
