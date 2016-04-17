@@ -68,16 +68,64 @@ do
 
 // Write query
 
+//let rec substituteExpr expression =
+//    match expression with
+//    | SpecificCall <@@ (=) @@> (_, _, exprList) ->
+//        let lhs = substituteExpr exprList.Head
+//        let rhs = substituteExpr exprList.Tail.Head
+//        <@@ mul %%lhs %%rhs @@>
+//    | ShapeVar var -> Expr.Var var
+//    | ShapeLambda (var, expr) -> Expr.Lambda (var, substituteExpr expr)
+//    | ShapeCombination(shapeComboObject, exprList) ->
+//        RebuildShapeCombination(shapeComboObject, List.map substituteExpr exprList)
+
 // Read queries
-let getAllUserNodesQuery =
+let getSpecificNodeQuery =
     <@
     let u = declareNode<UserNode>()
     matchNode u
+    where (u.FacebookId = "12345")
     returnResults u
     @>
 
+open Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
+open Microsoft.FSharp.Reflection
+open Microsoft.FSharp.Quotations
+open Microsoft.FSharp.Quotations.DerivedPatterns
+open Microsoft.FSharp.Quotations.ExprShape
+open Microsoft.FSharp.Quotations.Patterns
+open Neo4jClient.Cypher
+
+let (Let(_, _, getExpr)) =
+    <@
+        let u = declareNode<UserNode>()
+        where (u.FacebookId = "123")
+    @>
+
+let (|WhereClause|_|) q =
+    match q with
+    | SpecificCall <@ where @> (_targetObj, _types, [arg])
+        ->
+            match arg with
+            | BinaryExpr(op, arg1, arg2) -> Some (op, arg1, arg2)
+            | _ -> None
+    | _ -> None
+
+(|WhereClause|_|) getExpr
+
+client.Cypher
+    .Match("(u: UserNode)")
+    .Where("u.FacebookId = \"12345\"")
+    .Return(
+        <@
+        Func<_, _>(fun (u: ICypherResultItem) -> u.As<UserNode>(), u.Count())
+        @>
+        |> QuotationToLambdaExpression
+    )
+    .Results
+
 let res =
-    executeReadQuery<UserNode> client.Cypher getAllUserNodesQuery
+    executeReadQuery<UserNode> client.Cypher getSpecificNodeQuery
     |> Seq.toArray
 
 //let readQuery =
