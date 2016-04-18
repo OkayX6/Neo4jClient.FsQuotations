@@ -266,6 +266,7 @@ module QuotationInterpreter =
             match rest with
             | Sequential((MatchNodeCall(_) | AnyMatchRelation(_)), _) -> executeMatch cypher rest
             | Sequential(WhereCall _, _) -> executeWhere cypher rest
+            // TODO denisok: find a way to refactor execution branching with executeWhere
             | ReturnResultsCall returnArg -> executeReturn cypher returnArg
             | _ -> unhandledExpr rest
 
