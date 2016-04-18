@@ -44,6 +44,9 @@ module CypherQueryGrammar =
     let optionalMatchNode (_: #INeo4jNode) = ()
     let optionalMatchRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
     let where (_boolExpr: bool) = ()
+
+    let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
+
     let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
 
 [<AutoOpen>]
@@ -55,6 +58,11 @@ module internal QuotationsHelpers =
            methodInfo.DeclaringType.Assembly = fsQuotationAssembly
         then Some ()
         else None
+
+    let inline (|CreateNodeCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ createNode @> (_, _, [node]) -> Some node
+        | _ -> None
 
     let inline (|DeclareNodeCall|_|) (callExpr: Expr) =
         match callExpr with
@@ -267,7 +275,7 @@ module QuotationInterpreter =
 
         | _ -> unhandledExpr q
 
-    let executeQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
+    let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
         let rec impl cypher (query: Expr) =
             match query with
             | Let(var, expr, rest) when var.Name.Length > 0 ->
@@ -285,6 +293,33 @@ module QuotationInterpreter =
 
                 | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
             | Let(_) -> failwith "Invalid 'let' expression: bounded value must have a name"
+            | _ -> unhandledExpr query
+
+        impl cypher query
+
+    let private executeCreate (cypher: ICypherFluentQuery) createExpr: ICypherFluentQuery =
+        match createExpr with
+        | CreateNodeCall(ValueWithName(value, typ, name)) ->
+             printfn "Create node: %s (type: %s - value: %A)" name typ.Name value
+             // TODO denisok: extract constant
+             let paramName = sprintf "__neo4jfsquot__%s" name
+             let createExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
+             cypher.Create(createExpr)
+                   .WithParam(paramName, value)
+
+        | _ -> unsupportedScenario "Create node" createExpr
+
+    let executeWriteQuery (cypher: ICypherFluentQuery) (query: Expr<unit>): unit =
+        let rec impl cypher (query: Expr) =
+            match query with
+            | CreateNodeCall(_) as createExpr ->
+                executeCreate cypher createExpr
+                |> Cypher.executeWithoutResults
+
+            | Sequential(CreateNodeCall(_) as createExpr, rest) ->
+                let newCypher = executeCreate cypher createExpr
+                impl newCypher rest
+
             | _ -> unhandledExpr query
 
         impl cypher query
