@@ -12,7 +12,7 @@ let setupDbWithTestData () =
 
 [<Test>]
 let ``Create multiple single nodes`` () =
-    for i in 1 .. 3 do
+    for _ in 1 .. 3 do
         let u = { FacebookId = "newNode" }
         <@
         createNode u
