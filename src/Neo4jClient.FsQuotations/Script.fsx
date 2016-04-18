@@ -1,6 +1,7 @@
 #r @"..\..\packages\Neo4jClient\lib\net45\Neo4jClient.dll"
 
-#load "Cypher.fs"
+#load "StringUtils.fs"
+      "Cypher.fs"
       "Interpreter.fs"
 
 open System
@@ -74,44 +75,40 @@ do
 //    | ShapeCombination(shapeComboObject, exprList) ->
 //        RebuildShapeCombination(shapeComboObject, List.map substituteExpr exprList)
 
-// Read queries
-let getSpecificNodeQuery =
-    <@
-    let u = declareNode<UserNode>
-    matchNode u
-    where (u.FacebookId = "12345")
-    returnResults u
-    @>
 
-open Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
-open Microsoft.FSharp.Reflection
-open Microsoft.FSharp.Quotations
-open Microsoft.FSharp.Quotations.DerivedPatterns
-open Microsoft.FSharp.Quotations.ExprShape
-open Microsoft.FSharp.Quotations.Patterns
+open FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
+open FSharp.Reflection
+open FSharp.Quotations
+open FSharp.Quotations.DerivedPatterns
+open FSharp.Quotations.ExprShape
+open FSharp.Quotations.Patterns
+open FSharp.Linq.RuntimeHelpers
 open Neo4jClient.Cypher
+open System.Linq.Expressions
 
-let (Let(_, _, getExpr)) =
-    <@
-        let u = declareNode<UserNode>
-        where (u.FacebookId = "123")
-    @>
 
 client.Cypher
-    .Match("(u: UserNode)")
-    .Where("u.FacebookId = \"12345\"")
+    .Match("(u: UserNode), (v: UserNode)")
+    .Where("u.FacebookId = '12345' AND v.FacebookId = '45678'")
     .Return(
-        <@
-        Func<_, _>(fun (u: ICypherResultItem) -> u.As<UserNode>(), u.Count())
-        @>
+        <@ Func<_,_,_>(fun (u: ICypherResultItem) (v: ICypherResultItem) -> u.As<UserNode>(), v.As<UserNode>()) @>
         |> QuotationToLambdaExpression
     )
     .Results
 
+let queryRelation =
+    <@
+    let user = declareNode<UserNode>
+    let household = declareNode<HouseholdNode>
+    matchRelation user declareRelationship<IsResidentOf> household
+    returnResults (user, household)
+    @>
+
 let res =
-    getSpecificNodeQuery
+    queryRelation
     |> executeReadQuery client.Cypher 
     |> Seq.toArray
+
 
 //let readQuery =
 //    <@

@@ -86,8 +86,8 @@ module internal QuotationsHelpers =
             | PropertyGet(Some (PropertyGet _ as propChain), propInfo, []) ->
                 impl propChain
                 |> Option.map (fun (entity, chain) -> entity, propInfo.Name :: chain)
-            | PropertyGet(Some (Var x), propInfo, []) ->
-                Some (x.Name, [propInfo.Name])
+            | PropertyGet(Some (Var instance), propInfo, []) ->
+                Some (instance, [propInfo.Name])
             | _ -> None
 
         impl expr
@@ -95,13 +95,13 @@ module internal QuotationsHelpers =
 
     let (|BinaryExpr|_|) (expr: Expr) =
         match expr with
-        // NOTE: exponential
+        // NOTE: refactoring the pattern matches lead to exponential type inference/compile time
         | SpecificCall <@ (=) @> (_, _, [arg1; arg2]) -> Some ("=", arg1, arg2)
-    //    | SpecificCall <@ (<>) @> (_, _, [arg1; arg2]) -> Some ("<>", arg1, arg2)
-    //    | SpecificCall <@ (<) @> (_, _, [arg1; arg2]) -> Some ("<", arg1, arg2)
-    //    | SpecificCall <@ (>) @> (_, _, [arg1; arg2]) -> Some (">", arg1, arg2)
-    //    | SpecificCall <@ (<=) @> (_, _, [arg1; arg2]) -> Some ("<=", arg1, arg2)
-    //    | SpecificCall <@ (>=) @> (_, _, [arg1; arg2]) -> Some (">=", arg1, arg2)
+        | SpecificCall <@ (<>) @> (_, _, [arg1; arg2]) -> Some ("<>", arg1, arg2)
+        | SpecificCall <@ (<) @> (_, _, [arg1; arg2]) -> Some ("<", arg1, arg2)
+        | SpecificCall <@ (>) @> (_, _, [arg1; arg2]) -> Some (">", arg1, arg2)
+        | SpecificCall <@ (<=) @> (_, _, [arg1; arg2]) -> Some ("<=", arg1, arg2)
+        | SpecificCall <@ (>=) @> (_, _, [arg1; arg2]) -> Some (">=", arg1, arg2)
         | _ -> None
 
 [<AutoOpen>]
@@ -117,7 +117,7 @@ module QuotationInterpreter =
         match expr with
         | PropertyGetChain(entity, propChain) ->
             [|
-                yield entity
+                yield entity.Name
                 yield! propChain
             |]
             |> fun strings -> String.Join(".", strings)
@@ -130,11 +130,71 @@ module QuotationInterpreter =
             | _ -> unexpectedExpr "Get operand value" expr
         | _ -> unexpectedExpr "Get operand" expr
 
+    // Count arguments
+    // Generate lambda body
+    let private getArgumentsFromTuple (exprList: Expr list) =
+        let varMap =
+            exprList
+            |> List.fold (fun argMap expr ->
+                match expr with
+                | Var v
+                | PropertyGetChain(v, _) ->
+                    Map.add v.Name (Var(v.Name, typeof<ICypherResultItem>)) argMap
+                | _ -> failwith (sprintf "Unsupported expr: %A" expr)
+            ) Map.empty<string, Var>
+
+        let translatedReturnExpr =
+            exprList
+            |> List.map (fun expr ->
+                match expr with
+                | Var v ->
+                    let asMethod =
+                        typeof<ICypherResultItem>.GetMethod("As").MakeGenericMethod(v.Type)
+                    Expr.Call(Expr.Var(varMap.[v.Name]), asMethod, [])
+                | _ -> failwith (sprintf "Unsupported expr: %A" expr)
+            )
+
+        varMap, translatedReturnExpr
+
+    let private makeDelegate<'TFunc> vars body =
+        let expression =
+            Expr.NewDelegate(typeof<'TFunc>, vars, body)
+            |> QuotationToExpression
+        let lambda = expression :?> LambdaExpression
+        Expression.Lambda<'TFunc>(lambda.Body, lambda.Parameters)
+
+    let private getCypherReturn<'T> (cypher: ICypherFluentQuery) (exprList: Expr list) =
+        let varMap, translatedReturnExpr = getArgumentsFromTuple exprList
+        
+        let body = Expr.NewTuple(translatedReturnExpr)
+        let vars = varMap
+                   |> Seq.map (fun (KeyValue(_key, value)) -> value)
+                   |> Seq.toList
+
+        printfn "Vars: %A" vars
+        printfn "Body: %A" body
+
+        match vars with
+        | [] ->  makeDelegate<Func<'T>> vars body |> cypher.Return
+        | [_] -> makeDelegate<Func<_,'T>> vars body |> cypher.Return
+        | [_;_] -> makeDelegate<Func<_,_,'T>> vars body |> cypher.Return
+        | [_;_;_] -> makeDelegate<Func<_,_,_,'T>> vars body |> cypher.Return
+        | [_;_;_;_] -> makeDelegate<Func<_,_,_,_,'T>> vars body |> cypher.Return
+        | _ -> failwith "Too much values to return"
+
     let private executeReturn<'T> (cypher: ICypherFluentQuery) (returnExpr: Expr): seq<'T> =
+        let cypherExpr = function
+            | Var v -> v.Name
+            | e -> unexpectedExpr "RETURN statement" e
+
         match returnExpr with
         | Var v ->
             printfn "Return var: %s (type: %s)" v.Name v.Type.Name
-            cypher.Return(sprintf "%s" v.Name).Results
+            cypher.Return(cypherExpr returnExpr).Results
+
+        | NewTuple (exprList) ->
+            let cypherReturn = getCypherReturn cypher exprList
+            cypherReturn.Results
 
         | _ -> unhandledExpr returnExpr
 
@@ -160,15 +220,25 @@ module QuotationInterpreter =
             | ReturnResultsCall returnArg -> executeReturn cypher returnArg
             | _ -> unhandledExpr rest
 
+        let nodeCypherExpr (n: Expr) = sprintf "(%O:%s)" n n.Type.Name
+
         match q with
         | Sequential(MatchNodeCall(nodeArg), rest) ->
-            let matchExpr = sprintf "(%O: %s)" nodeArg nodeArg.Type.Name
+            let matchExpr = nodeCypherExpr nodeArg
             printfn "MatchNode: %A (expr: %s)" nodeArg matchExpr
             executeRest (cypher.Match(matchExpr)) rest
 
-        | Sequential(MatchRelationCall(nodeArg), rest) ->
-            printfn "MatchRelation: %A" nodeArg
-            executeRest cypher rest
+        | Sequential(MatchRelationCall(node1, rel, node2), rest) ->
+            let relCypherExpr (r: Expr) = sprintf "[:%s]" r.Type.Name
+            let matchExpr =
+                sprintf "%s-%s-%s"
+                    (nodeCypherExpr node1)
+                    (relCypherExpr rel)
+                    (nodeCypherExpr node2)
+
+            printfn "MatchRelation: %s" matchExpr
+            let newCypher = cypher.Match(matchExpr)
+            executeRest newCypher rest
 
         | _ -> unhandledExpr q
 
