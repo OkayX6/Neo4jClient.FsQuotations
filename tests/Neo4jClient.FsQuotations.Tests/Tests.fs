@@ -68,3 +68,51 @@ let ``Get nodes having specific relationship`` () =
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of results")
+
+[<Test>]
+let ``Match any relationships of a specific type`` () =
+    let query =
+        <@
+        let r = declareRelationship<IsResidentOf>
+        matchRelation declareNode<UserNode> r declareNode<HouseholdNode>
+        returnResults r
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.toArray
+
+    Assert.AreEqual(3, results.Length, "Number of residency relationships")
+
+[<Test>]
+let ``Match on right relationships`` () =
+    let query =
+        <@
+        let r = declareRelationship<IsResidentOf>
+        matchRightRelation declareNode<UserNode> r declareNode<HouseholdNode>
+        returnResults r
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.toArray
+
+    Assert.AreEqual(3, results.Length, "Number of residency right-relationships")
+
+[<Test>]
+let ``Match on left relationships`` () =
+    let query =
+        <@
+        let r = declareRelationship<IsResidentOf>
+        matchLeftRelation declareNode<UserNode> r declareNode<HouseholdNode>
+        returnResults r
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.toArray
+
+    Assert.AreEqual(0, results.Length, "Number of residency left-relationships")

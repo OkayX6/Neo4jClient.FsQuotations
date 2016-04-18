@@ -39,6 +39,8 @@ module CypherQueryGrammar =
     let matchNode (_: #INeo4jNode) = ()
 
     let matchRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
+    let matchLeftRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
+    let matchRightRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
     let optionalMatchNode (_: #INeo4jNode) = ()
     let optionalMatchRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
     let where (_boolExpr: bool) = ()
@@ -56,7 +58,12 @@ module internal QuotationsHelpers =
 
     let inline (|DeclareNodeCall|_|) (callExpr: Expr) =
         match callExpr with
-        | Call(None, IsPredefinedMethod "declareNode", []) -> Some ()
+        | SpecificCall <@ declareNode @> (_, [nodeType], _) -> Some nodeType
+        | _ -> None
+
+    let inline (|DeclareRelationshipCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ declareRelationship @> (_, [relType], _) -> Some relType
         | _ -> None
 
     let inline (|MatchNodeCall|_|) (callExpr: Expr) =
@@ -69,9 +76,13 @@ module internal QuotationsHelpers =
         | SpecificCall <@ where @> (_, _, [arg]) -> Some arg
         | _ -> None
 
-    let inline (|MatchRelationCall|_|) (callExpr: Expr) =
+    let inline (|AnyMatchRelation|_|) (callExpr: Expr) =
         match callExpr with
-        | Call(None, IsPredefinedMethod "matchRelation", [nodeArg1 ; relArg ; nodeArg2])
+        | Call(None,
+               ( IsPredefinedMethod "matchRelation"
+               | IsPredefinedMethod "matchRightRelation"
+               | IsPredefinedMethod "matchLeftRelation" ),
+               [nodeArg1 ; relArg ; nodeArg2])
             -> Some (nodeArg1, relArg, nodeArg2)
         | _ -> None
 
@@ -215,12 +226,16 @@ module QuotationInterpreter =
     let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): seq<'T> =
         let executeRest cypher (rest: Expr): seq<'T> =
             match rest with
-            | Sequential((MatchNodeCall(_) | MatchRelationCall(_)), _) -> executeMatch cypher rest
+            | Sequential((MatchNodeCall(_) | AnyMatchRelation(_)), _) -> executeMatch cypher rest
             | Sequential(WhereCall _, _) -> executeWhere cypher rest
             | ReturnResultsCall returnArg -> executeReturn cypher returnArg
             | _ -> unhandledExpr rest
 
-        let nodeCypherExpr (n: Expr) = sprintf "(%O:%s)" n n.Type.Name
+        let nodeCypherExpr (n: Expr) =
+            match n with
+            | Var v -> sprintf "(%O:%s)" v.Name v.Type.Name
+            | DeclareNodeCall typ -> sprintf "(:%s)" typ.Name
+            | _ -> unhandledExpr n
 
         match q with
         | Sequential(MatchNodeCall(nodeArg), rest) ->
@@ -228,13 +243,22 @@ module QuotationInterpreter =
             printfn "MatchNode: %A (expr: %s)" nodeArg matchExpr
             executeRest (cypher.Match(matchExpr)) rest
 
-        | Sequential(MatchRelationCall(node1, rel, node2), rest) ->
-            let relCypherExpr (r: Expr) = sprintf "[:%s]" r.Type.Name
+        | Sequential(AnyMatchRelation(node1, rel, node2) as matchRel, rest) ->
+            let relCypherExpr (r: Expr) =
+                match r with
+                | Var v -> sprintf "[%s:%s]" v.Name v.Type.Name
+                | DeclareRelationshipCall typ -> sprintf "[:%s]" typ.Name
+                | _ -> unhandledExpr r
+
             let matchExpr =
-                sprintf "%s-%s-%s"
-                    (nodeCypherExpr node1)
-                    (relCypherExpr rel)
-                    (nodeCypherExpr node2)
+                let formatter =
+                    match matchRel with
+                    | SpecificCall <@ matchRelation @> _ -> sprintf "%s-%s-%s"
+                    | SpecificCall <@ matchRightRelation @> _ -> sprintf "%s-%s->%s"
+                    | SpecificCall <@ matchLeftRelation @> _ -> sprintf "%s<-%s-%s"
+                    | _ -> unhandledExpr matchRel
+
+                formatter (nodeCypherExpr node1) (relCypherExpr rel) (nodeCypherExpr node2)
 
             printfn "MatchRelation: %s" matchExpr
             let newCypher = cypher.Match(matchExpr)
@@ -247,13 +271,13 @@ module QuotationInterpreter =
             match query with
             | Let(var, expr, rest) when var.Name.Length > 0 ->
                 match expr with
-                | DeclareNodeCall ->
-                    printfn "Declare node: %s (type: %s)" var.Name var.Type.Name
+                | DeclareNodeCall typ ->
+                    printfn "Declare node: %s (type: %s)" var.Name typ.Name
                     match rest with
                     | Let(_) -> impl cypher rest
                     | _ -> executeMatch cypher rest
-                | Patterns.Call(None, methodInfo, []) when methodInfo.Name = "declareNode" ->
-                    printfn "Declare relationship: %s (type: %s)" var.Name var.Type.Name
+                | DeclareRelationshipCall typ ->
+                    printfn "Declare relationship: %s (type: %s)" var.Name typ.Name
                     match rest with
                     | Let(_) -> impl cypher rest
                     | _ -> executeMatch cypher rest

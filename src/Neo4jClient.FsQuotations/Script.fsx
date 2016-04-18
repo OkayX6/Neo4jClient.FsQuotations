@@ -124,16 +124,15 @@ client.Cypher
     )
     .Results
 
-let queryRelation =
+let query =
     <@
-    let user = declareNode<UserNode>
-    let household = declareNode<HouseholdNode>
-    matchRelation user declareRelationship<IsResidentOf> household
-    returnResults (user, household)
+    let r = declareRelationship<IsResidentOf>
+    matchRelation declareNode<UserNode> r declareNode<HouseholdNode>
+    returnResults r
     @>
 
 let res =
-    queryRelation
+    query
     |> executeReadQuery client.Cypher 
     |> Seq.toArray
 
