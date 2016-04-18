@@ -21,7 +21,7 @@ module Cypher =
 
     let inline raiseNeo4jNodeTypeException<'T> () = raiseNeo4jNodeTypeExceptionFromType typeof<'T>
 
-    let inline private tryFindNeo4jKey (entity: 'T) =
+    let internal tryFindNeo4jKey (entity: 'T) =
         let properties = typeof<'T>.GetProperties()
         properties
         |> Array.tryPick (fun prop ->
@@ -34,7 +34,12 @@ module Cypher =
             )
         )
 
-    let inline tryGetNeo4jKeyName (typeInfo: Type) =
+    let internal findNeo4jKey (entity: 'T) =
+        entity
+        |> tryFindNeo4jKey
+        |> Option.get
+
+    let tryGetNeo4jKeyName (typeInfo: Type) =
         let properties = typeInfo.GetProperties()
         properties
         |> Array.tryPick (fun prop ->
@@ -47,7 +52,7 @@ module Cypher =
             )
         )
 
-    let inline getNeo4jKeyName (typeInfo: Type) =
+    let getNeo4jKeyName (typeInfo: Type) =
         let properties = typeInfo.GetProperties()
         properties
         |> Array.pick (fun prop ->
