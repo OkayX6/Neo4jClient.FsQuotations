@@ -31,6 +31,10 @@ let clearAllRelations (client: GraphClient) =
 let clearAllNodes (client: GraphClient) =
     client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
 
+let createNodeAndExecute (client: GraphClient) node =
+    <@ createNode node @>
+    |> executeWriteQuery client.Cypher
+
 let initDbWithTestData (client: GraphClient) =
     // prepare data for tests
     let userDenis = { FacebookId = "Denis" }
