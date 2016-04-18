@@ -24,7 +24,7 @@ let ``Get all nodes with specific label`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Set.ofSeq
 
@@ -45,7 +45,7 @@ let ``Get nodes with basic WHERE clause`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Seq.toArray
 
@@ -64,7 +64,7 @@ let ``Get pairs of nodes having specific relationship`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of results")
@@ -82,7 +82,7 @@ let ``Get all nodes having relationship with another`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Set.ofSeq
         |> Set.map (fun user -> user.FacebookId)
 
@@ -99,7 +99,7 @@ let ``Match any relationships of a specific type`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of residency relationships")
@@ -115,7 +115,7 @@ let ``Match on right relationships`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of residency right-relationships")
@@ -131,7 +131,7 @@ let ``Match on left relationships`` () =
 
     let results =
         query
-        |> executeReadQuery neo4jClient.Cypher
+        |> executeQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(0, results.Length, "Number of residency left-relationships")

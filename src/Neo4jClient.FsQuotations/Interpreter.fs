@@ -266,7 +266,7 @@ module QuotationInterpreter =
 
         | _ -> unhandledExpr q
 
-    let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
+    let executeQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
         let rec impl cypher (query: Expr) =
             match query with
             | Let(var, expr, rest) when var.Name.Length > 0 ->
