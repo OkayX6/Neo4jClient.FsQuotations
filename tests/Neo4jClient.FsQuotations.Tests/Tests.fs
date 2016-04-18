@@ -53,7 +53,7 @@ let ``Get nodes with basic WHERE clause`` () =
     Assert.AreEqual("Denis", results.[0], "Facebook ID")
 
 [<Test>]
-let ``Get nodes having specific relationship`` () =
+let ``Get pairs of nodes having specific relationship`` () =
     let query =
         <@
         let user = declareNode<UserNode>
@@ -68,6 +68,25 @@ let ``Get nodes having specific relationship`` () =
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of results")
+
+[<Test>]
+let ``Get all nodes having relationship with another`` () =
+    let query =
+        <@
+        let user = declareNode<UserNode>
+        let household = declareNode<HouseholdNode>
+        matchRelation user declareRelationship<IsResidentOf> household
+        where (household.Name = "Coloc de la Joie")
+        returnResults user
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Set.ofSeq
+        |> Set.map (fun user -> user.FacebookId)
+
+    Assert.AreEqual(set [ "Denis"; "TT"; "Opwal" ], results, "Residents of the 'Coloc de la Joie' household")
 
 [<Test>]
 let ``Match any relationships of a specific type`` () =
