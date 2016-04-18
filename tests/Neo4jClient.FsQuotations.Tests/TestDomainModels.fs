@@ -24,6 +24,13 @@ type HouseholdNode =
     { [<Neo4jKey>] Name: string }
     interface INeo4jNode
 
+
+let clearAllRelations (client: GraphClient) =
+    client.Cypher.Match("()-[r]->()").Delete("r").ExecuteWithoutResults()
+
+let clearAllNodes (client: GraphClient) =
+    client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
+
 let initDbWithTestData (client: GraphClient) =
     // prepare data for tests
     let userDenis = { FacebookId = "Denis" }
@@ -57,14 +64,9 @@ let initDbWithTestData (client: GraphClient) =
             .Create(sprintf "(n1)-[:%s {relParam}]->(n2)" relLabel)
             .WithParam("relParam", rel)
             .ExecuteWithoutResults()
-    
-    let clearAllRelations () =
-        client.Cypher.Match("()-[r]->()").Delete("r").ExecuteWithoutResults()
-    let clearAllNodes () =
-        client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
 
-    clearAllRelations ()
-    clearAllNodes ()
+    clearAllRelations client
+    clearAllNodes client
 
     createNode userDenis
     createNode userTT

@@ -1,14 +1,9 @@
-module Neo4jClient.FsQuotations.Tests
+module Neo4jClient.FsQuotations.Tests.ReadQueryTests
 
 open System
 open NUnit.Framework
 open Neo4jClient
 open Neo4jClient.FsQuotations
-
-let neo4jClient =
-    let client = new GraphClient(Uri("http://localhost:7474/db/data"), "neo4j", "Password123")
-    client.Connect()
-    client
 
 // TODO denisok: this shouldn't be executed for every tests (read queries)
 [<SetUp>]
@@ -25,7 +20,7 @@ let ``Get all nodes with specific label`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Set.ofSeq
 
@@ -46,7 +41,7 @@ let ``Get nodes with basic WHERE clause`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.map (fun user -> user.FacebookId)
         |> Seq.toArray
 
@@ -65,7 +60,7 @@ let ``Get pairs of nodes having specific relationship`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of results")
@@ -83,7 +78,7 @@ let ``Get all nodes having relationship with another`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Set.ofSeq
         |> Set.map (fun user -> user.FacebookId)
 
@@ -100,7 +95,7 @@ let ``Match any relationships of a specific type`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of residency relationships")
@@ -116,7 +111,7 @@ let ``Match on right relationships`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(3, results.Length, "Number of residency right-relationships")
@@ -132,7 +127,7 @@ let ``Match on left relationships`` () =
 
     let results =
         query
-        |> executeQuery neo4jClient.Cypher
+        |> executeReadQuery neo4jClient.Cypher
         |> Seq.toArray
 
     Assert.AreEqual(0, results.Length, "Number of residency left-relationships")

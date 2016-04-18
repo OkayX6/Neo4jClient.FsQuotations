@@ -56,7 +56,9 @@
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <ItemGroup>
     <Compile Include="TestDomainModels.fs" />
-    <Compile Include="Tests.fs" />
+    <Compile Include="TestContext.fs" />
+    <Compile Include="ReadQueryTests.fs" />
+    <Compile Include="WriteQueryTests.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
