@@ -10,7 +10,7 @@ open Neo4jClient.FsQuotations
 
 [<CLIMutable>]
 type UserNode = 
-    { FacebookId: string }
+    { [<Neo4jKey>] FacebookId: string }
     interface INeo4jNode
 
 [<CLIMutable>]
@@ -19,8 +19,13 @@ type IsResidentOf =
     interface INeo4jRelationship
 
 [<CLIMutable>]
+type IsGuestOf =
+    { CustomHouseholdName: string }
+    interface INeo4jRelationship
+
+[<CLIMutable>]
 type HouseholdNode = 
-    { Name: string }
+    { [<Neo4jKey>] Name: string }
     interface INeo4jNode
 
 
@@ -45,6 +50,24 @@ do
             .Create(sprintf "(node:%s {nodeParam})" nodeTypeName)
             .WithParam("nodeParam", node)
             .ExecuteWithoutResults()
+
+    let createRightRelationship (node1: #INeo4jNode) (rel: #INeo4jRelationship) (node2: #INeo4jNode) =
+        let nLabel1 = node1.GetType().Name
+        let relLabel = rel.GetType().Name
+        let nLabel2 = node2.GetType().Name
+        
+        let keyName1, keyValue1 = Cypher.findNeo4jKey node1
+        let keyName2, keyValue2 = Cypher.findNeo4jKey node2
+        let whereExpr = sprintf "n1.%s = '%O' AND n2.%s = '%O'" keyName1 keyValue1 keyName2 keyValue2
+        printfn "WHERE: %s" whereExpr
+
+        client
+            .Cypher
+            .Match(sprintf "(n1:%s), (n2:%s)" nLabel1 nLabel2)
+            .Where(whereExpr)
+            .Create(sprintf "(n1)-[:%s {relParam}]->(n2)" relLabel)
+            .WithParam("relParam", rel)
+            .ExecuteWithoutResults()
     
     let clearAllRelations () =
         client.Cypher.Match("()-[r]->()").Delete("r").ExecuteWithoutResults()
@@ -61,6 +84,11 @@ do
 
     createNode householdColocJoie
     createNode householdColoCarrouf
+
+    createRightRelationship userDenis { IsResidentOf.CustomHouseholdName = "Maison à République" } householdColocJoie
+    createRightRelationship userTT { IsResidentOf.CustomHouseholdName = "" } householdColocJoie
+    createRightRelationship userOpwal { IsResidentOf.CustomHouseholdName = "Répupu" } householdColocJoie
+    createRightRelationship userDenis { IsGuestOf.CustomHouseholdName = "Chez Barbie" } householdColoCarrouf
 
 // Write query
 

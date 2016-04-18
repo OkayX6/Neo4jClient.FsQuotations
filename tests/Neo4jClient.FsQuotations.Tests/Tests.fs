@@ -34,7 +34,7 @@ let ``Get all nodes with specific label`` () =
         "Get all user nodes")
 
 [<Test>]
-let ``MATCH-WHERE-RETURN with equality`` () =
+let ``Get nodes with basic WHERE clause`` () =
     let query =
         <@
         let u = declareNode<UserNode>
@@ -53,7 +53,7 @@ let ``MATCH-WHERE-RETURN with equality`` () =
     Assert.AreEqual("Denis", results.[0], "Facebook ID")
 
 [<Test>]
-let ``match relations`` () =
+let ``Get nodes having specific relationship`` () =
     let query =
         <@
         let user = declareNode<UserNode>
@@ -67,4 +67,4 @@ let ``match relations`` () =
         |> executeReadQuery neo4jClient.Cypher
         |> Seq.toArray
 
-    Assert.AreEqual(1, results.Length, "Number of results")
+    Assert.AreEqual(3, results.Length, "Number of results")
