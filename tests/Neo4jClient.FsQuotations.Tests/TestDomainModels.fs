@@ -31,7 +31,7 @@ let clearAllRelations (client: GraphClient) =
 let clearAllNodes (client: GraphClient) =
     client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults()
 
-let createNodeAndExecute (client: GraphClient) node =
+let createNodeAndExecute (client: GraphClient) (node: #INeo4jNode) =
     <@ createNode node @>
     |> executeWriteQuery client.Cypher
 
