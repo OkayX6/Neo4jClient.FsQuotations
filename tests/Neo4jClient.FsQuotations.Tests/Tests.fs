@@ -10,6 +10,7 @@ let neo4jClient =
     client.Connect()
     client
 
+// TODO denisok: this shouldn't be executed for every tests (read queries)
 [<SetUp>]
 let setupDbWithTestData () = initDbWithTestData neo4jClient
 

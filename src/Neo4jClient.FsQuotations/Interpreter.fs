@@ -191,6 +191,7 @@ module QuotationInterpreter =
         | [_;_] -> makeDelegate<Func<_,_,'T>> vars body |> cypher.Return
         | [_;_;_] -> makeDelegate<Func<_,_,_,'T>> vars body |> cypher.Return
         | [_;_;_;_] -> makeDelegate<Func<_,_,_,_,'T>> vars body |> cypher.Return
+        // TODO denisok: add more cases
         | _ -> failwith "Too much values to return"
 
     let private executeReturn<'T> (cypher: ICypherFluentQuery) (returnExpr: Expr): seq<'T> =
