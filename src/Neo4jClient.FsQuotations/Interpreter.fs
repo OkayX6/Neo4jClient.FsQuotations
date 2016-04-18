@@ -46,6 +46,7 @@ module CypherQueryGrammar =
     let where (_boolExpr: bool) = ()
 
     let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
+    let deleteNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
 
     let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
 
@@ -64,6 +65,11 @@ module internal QuotationsHelpers =
         | SpecificCall <@ createNode @> (_, _, [node]) -> Some node
         | _ -> None
 
+    let inline (|DeleteNodeCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ deleteNode @> (_, _, [node]) -> Some node
+        | _ -> None
+
     let inline (|DeclareNodeCall|_|) (callExpr: Expr) =
         match callExpr with
         | SpecificCall <@ declareNode @> (_, [nodeType], _) -> Some nodeType
@@ -76,7 +82,7 @@ module internal QuotationsHelpers =
 
     let inline (|MatchNodeCall|_|) (callExpr: Expr) =
         match callExpr with
-        | Call(None, IsPredefinedMethod "matchNode", [nodeArg]) -> Some nodeArg
+        | SpecificCall <@ matchNode @> (_, _, [node]) -> Some node
         | _ -> None
 
     let inline (|WhereCall|_|) (callExpr: Expr) =
@@ -125,6 +131,8 @@ module internal QuotationsHelpers =
 
 [<AutoOpen>]
 module QuotationInterpreter =
+    type InterpreterResult<'TReturn> = Choice<ICypherFluentQuery, ICypherFluentQuery<'TReturn>>
+    
     let private unhandledExpr (expr: Expr) = failwith (sprintf "Unhandled expression: %A" expr)
     let private unsupportedScenario (scenario: string) (expr: Expr) =
         let exnMsg = sprintf "%s (Expr: %A)" scenario expr
@@ -202,7 +210,7 @@ module QuotationInterpreter =
         // TODO denisok: add more cases
         | _ -> failwith "Too much values to return"
 
-    let private executeReturn<'T> (cypher: ICypherFluentQuery) (returnExpr: Expr): seq<'T> =
+    let private executeReturn<'T> (cypher: ICypherFluentQuery) (returnExpr: Expr): InterpreterResult<'T> =
         let cypherExpr = function
             | Var v -> v.Name
             | e -> unexpectedExpr "RETURN statement" e
@@ -210,15 +218,34 @@ module QuotationInterpreter =
         match returnExpr with
         | Var v ->
             printfn "Return var: %s (type: %s)" v.Name v.Type.Name
-            cypher.Return(cypherExpr returnExpr).Results
+            Choice2Of2 (cypher.Return(cypherExpr returnExpr))
 
         | NewTuple (exprList) ->
-            let cypherReturn = getCypherReturn cypher exprList
-            cypherReturn.Results
+            printfn "Return tuple: %A" exprList
+            Choice2Of2 (getCypherReturn cypher exprList)
 
         | _ -> unhandledExpr returnExpr
 
-    let rec private executeWhere<'T> (cypher: ICypherFluentQuery) (whereExpr: Expr): seq<'T> =
+    let private executeCreate (cypher: ICypherFluentQuery) createExpr =
+        match createExpr with
+        | CreateNodeCall(ValueWithName(value, typ, name)) ->
+             printfn "Create node: %s (type: %s - value: %A)" name typ.Name value
+             // TODO denisok: extract constant
+             let paramName = sprintf "__neo4jfsquot__%s" name
+             let createExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
+             cypher.Create(createExpr)
+                   .WithParam(paramName, value)
+
+        | _ -> unsupportedScenario "Create node" createExpr
+
+    let private executeDelete (cypher: ICypherFluentQuery) deleteExpr =
+        match deleteExpr with
+        | DeleteNodeCall(Var(node)) ->
+             printfn "Delete node: %s (type: %s)" node.Name node.Type.Name
+             cypher.Delete(node.Name)
+        | _ -> unsupportedScenario "Delete node" deleteExpr
+
+    let private executeWhere<'T> (cypher: ICypherFluentQuery) (whereExpr: Expr): InterpreterResult<'T> =
         match whereExpr with
         | Sequential(WhereCall(BinaryExpr(op, arg1, arg2)), rest) ->
             let formattedArg1 = getOperand arg1
@@ -229,11 +256,13 @@ module QuotationInterpreter =
 
             match rest with
             | ReturnResultsCall(returnExpr) -> executeReturn cypher returnExpr
+            | CreateNodeCall _ -> Choice1Of2 (executeCreate cypher rest)
+            | DeleteNodeCall _ -> Choice1Of2 (executeDelete cypher rest)
             | _ -> unexpectedExpr "After 'where' expression" rest
         | _ -> unhandledExpr whereExpr
 
-    let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): seq<'T> =
-        let executeRest cypher (rest: Expr): seq<'T> =
+    let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): InterpreterResult<'T> =
+        let executeRest cypher (rest: Expr) =
             match rest with
             | Sequential((MatchNodeCall(_) | AnyMatchRelation(_)), _) -> executeMatch cypher rest
             | Sequential(WhereCall _, _) -> executeWhere cypher rest
@@ -278,48 +307,44 @@ module QuotationInterpreter =
     let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
         let rec impl cypher (query: Expr) =
             match query with
-            | Let(var, expr, rest) when var.Name.Length > 0 ->
+            | Let(var, expr, rest) ->
                 match expr with
                 | DeclareNodeCall typ ->
                     printfn "Declare node: %s (type: %s)" var.Name typ.Name
-                    match rest with
-                    | Let(_) -> impl cypher rest
-                    | _ -> executeMatch cypher rest
+                    impl cypher rest
                 | DeclareRelationshipCall typ ->
                     printfn "Declare relationship: %s (type: %s)" var.Name typ.Name
-                    match rest with
-                    | Let(_) -> impl cypher rest
-                    | _ -> executeMatch cypher rest
-
+                    impl cypher rest
                 | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
-            | Let(_) -> failwith "Invalid 'let' expression: bounded value must have a name"
-            | _ -> unhandledExpr query
+            | _ -> executeMatch cypher query
 
-        impl cypher query
-
-    let private executeCreate (cypher: ICypherFluentQuery) createExpr: ICypherFluentQuery =
-        match createExpr with
-        | CreateNodeCall(ValueWithName(value, typ, name)) ->
-             printfn "Create node: %s (type: %s - value: %A)" name typ.Name value
-             // TODO denisok: extract constant
-             let paramName = sprintf "__neo4jfsquot__%s" name
-             let createExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
-             cypher.Create(createExpr)
-                   .WithParam(paramName, value)
-
-        | _ -> unsupportedScenario "Create node" createExpr
+        match impl cypher query with
+        | Choice1Of2 _ -> failwith "Unexpected interpreter result"
+        | Choice2Of2(cypherResult) -> cypherResult.Results
 
     let executeWriteQuery (cypher: ICypherFluentQuery) (query: Expr<unit>): unit =
         let rec impl cypher (query: Expr) =
             match query with
-            | CreateNodeCall(_) as createExpr ->
-                executeCreate cypher createExpr
-                |> Cypher.executeWithoutResults
-
+            // Create node
+            | CreateNodeCall(_) as createExpr -> Choice1Of2 (executeCreate cypher createExpr)
             | Sequential(CreateNodeCall(_) as createExpr, rest) ->
                 let newCypher = executeCreate cypher createExpr
                 impl newCypher rest
 
-            | _ -> unhandledExpr query
+            // Declare node/relationship
+            | Let(var, expr, rest) ->
+                match expr with
+                | DeclareNodeCall typ ->
+                    printfn "Declare node: %s (type: %s)" var.Name typ.Name
+                    impl cypher rest
+                | DeclareRelationshipCall typ ->
+                    printfn "Declare relationship: %s (type: %s)" var.Name typ.Name
+                    impl cypher rest
+                | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
 
-        impl cypher query
+            // Could be a match query
+            | _ -> executeMatch cypher query
+
+        match impl cypher query with
+        | Choice1Of2 cypher -> cypher.ExecuteWithoutResults()
+        | Choice2Of2 _ -> failwith "Unexpected interpreter result"

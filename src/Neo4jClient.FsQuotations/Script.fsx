@@ -33,15 +33,8 @@ open FSharp.Quotations.Patterns
 open FSharp.Linq.RuntimeHelpers
 open Neo4jClient.Cypher
 open System.Linq.Expressions
-let q =
-    let u: UserNode = { FacebookId = "newNode" }
 
-    <@
-    createNode u
-    @>
-    |> executeWriteQuery client.Cypher
-
-let res =
+let getNodes() =
     <@
     let n = declareNode<UserNode>
     matchNode n
@@ -51,9 +44,30 @@ let res =
     |> executeReadQuery client.Cypher
     |> Seq.toArray
 
+do
+    let u: UserNode = { FacebookId = "newNode" }
+
+    <@
+    createNode u
+    @>
+    |> executeWriteQuery client.Cypher
+
+getNodes() // Before deletion
+
+do
+    <@
+    let u = declareNode<UserNode>
+    matchNode u
+    where (u.FacebookId = "newNode")
+    deleteNode u
+    @>
+    |> executeWriteQuery client.Cypher
+
+getNodes() // After deletion
 
 client.Cypher
-    .Create("(n: UserNode {param})")
-    .WithParam("param", { FacebookId = "newNode" })
-    .ExecuteWithoutResults()
+    .Match("(n: UserNode)")
+    .Where("n.FacebookId = 'newNode'")
+    .Delete("n")
+    .ExecuteWithoutResults
 
