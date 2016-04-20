@@ -22,12 +22,18 @@ open Neo4jClient.FsQuotations
 let client = new GraphClient(Uri("http://localhost:7474/db/data"), "neo4j", "Password123")
 client.Connect()
 
+(*** hide ***)
+// Clear all data
+client.Cypher.Match("n").DetachDelete("n").ExecuteWithoutResults()
+
 (**
 
 ## Define your model
 
 Declare nodes & relationships in your model (by inheriting from `INeo4jNode` or
 `INeo4jRelationship` interfaces).
+
+We will define users.
 *)
 
 [<CLIMutable>]
@@ -36,19 +42,36 @@ type UserNode =
     interface INeo4jNode
 
 (**
-## Create a node
+## Create user nodes
 *)
 
-let node = { FacebookId = "Zuckerberg" }
-<@ createNode node @>
-|> executeWriteQuery client.Cypher
+for id in [ "Okay"; "TT"; "Opwal" ] do
+    let user = { FacebookId = id }
+    <@ createNode user @>
+    |> executeWriteQuery client.Cypher
 
 (**
-## Query all nodes of a specific type
+## Get all nodes with specific label
 *)
 
-let results = 
-    <@ let n = declareNode<UserNode>
-       matchNode n
-       returnResults n @>
+let allUsers = 
+    <@ let user = declareNode<UserNode>
+       matchNode user
+       returnResults user @>
     |> executeReadQuery client.Cypher
+
+(** Results: *)
+(*** include-value: allUsers ***)
+
+(**
+Get specific user
+*)
+let userTT =
+    <@ let user = declareNode<UserNode>
+       matchNode user
+       where (user.FacebookId = "TT")
+       returnResults user @>
+    |> executeReadQuery client.Cypher
+
+(** Results: *)
+(*** include-value: userTT ***)
