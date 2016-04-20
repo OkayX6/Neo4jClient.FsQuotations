@@ -4,8 +4,10 @@
 #I "./../../bin/Neo4jClient.FsQuotations"
 
 (**
-Introducing your project
-========================
+Basic usage
+===========
+
+## Dependencies
 
 Reference this library (dependency on Neo4jClient) and create a Neo4j GraphClient().
 
@@ -21,7 +23,11 @@ let client = new GraphClient(Uri("http://localhost:7474/db/data"), "neo4j", "Pas
 client.Connect()
 
 (**
-Define nodes & relationships in your model
+
+## Define your model
+
+Declare nodes & relationships in your model (by inheriting from `INeo4jNode` or
+`INeo4jRelationship` interfaces).
 *)
 
 [<CLIMutable>]
@@ -30,7 +36,7 @@ type UserNode =
     interface INeo4jNode
 
 (**
-Create a node
+## Create a node
 *)
 
 let node = { FacebookId = "Zuckerberg" }
@@ -38,7 +44,7 @@ let node = { FacebookId = "Zuckerberg" }
 |> executeWriteQuery client.Cypher
 
 (**
-Query all nodes of a specific type
+## Query all nodes of a specific type
 *)
 
 let results = 
