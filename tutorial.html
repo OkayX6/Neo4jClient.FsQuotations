@@ -34,21 +34,91 @@
         <div class="span9" id="main">
           
 <h1><a name="Introducing-your-project" class="anchor" href="#Introducing-your-project">Introducing your project</a></h1>
-<p>Say more</p>
+<p>Reference this library (dependency on Neo4jClient) and create a Neo4j GraphClient().</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#r</span> <span class="s">&quot;Neo4jClient.dll&quot;</span>
+<span class="prep">#r</span> <span class="s">&quot;Neo4jClient.FsQuotations.dll&quot;</span>
+
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">System</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">Neo4jClient</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs2', 3)" onmouseover="showTip(event, 'fs2', 3)" class="i">Neo4jClient</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 4)" onmouseover="showTip(event, 'fs3', 4)" class="i">FsQuotations</span>
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs4', 5)" onmouseover="showTip(event, 'fs4', 5)" class="i">client</span> <span class="o">=</span> <span class="k">new</span> <span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="t">GraphClient</span>(<span onmouseout="hideTip(event, 'fs6', 7)" onmouseover="showTip(event, 'fs6', 7)" class="t">Uri</span>(<span class="s">&quot;http://localhost:7474/db/data&quot;</span>), <span class="s">&quot;neo4j&quot;</span>, <span class="s">&quot;Password123&quot;</span>)
+<span onmouseout="hideTip(event, 'fs4', 8)" onmouseover="showTip(event, 'fs4', 8)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs7', 9)" onmouseover="showTip(event, 'fs7', 9)" class="f">Connect</span>()
+</code></pre></td>
+</tr>
+</table>
+<p>Define nodes &amp; relationships in your model</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
 <span class="l">4: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#r</span> <span class="s">&quot;Neo4jClient.FsQuotations.dll&quot;</span>
-<span class="k">open</span> <span class="i">Neo4jClient</span><span class="o">.</span><span class="i">FsQuotations</span>
-
-<span class="i">Library</span><span class="o">.</span><span class="i">hello</span> <span class="n">0</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[&lt;<span onmouseout="hideTip(event, 'fs8', 10)" onmouseover="showTip(event, 'fs8', 10)" class="t">CLIMutable</span>&gt;]
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs9', 11)" onmouseover="showTip(event, 'fs9', 11)" class="t">UserNode</span> <span class="o">=</span> 
+    { <span onmouseout="hideTip(event, 'fs10', 12)" onmouseover="showTip(event, 'fs10', 12)" class="i">FacebookId</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs11', 13)" onmouseover="showTip(event, 'fs11', 13)" class="t">string</span> }
+    <span class="k">interface</span> <span onmouseout="hideTip(event, 'fs12', 14)" onmouseover="showTip(event, 'fs12', 14)" class="t">INeo4jNode</span>
 </code></pre></td>
 </tr>
 </table>
-<p>Some more info</p>
+<p>Create a node</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs13', 15)" onmouseover="showTip(event, 'fs13', 15)" class="i">node</span> <span class="o">=</span> { <span class="i">FacebookId</span> <span class="o">=</span> <span class="s">&quot;Zuckerberg&quot;</span> }
+&lt;@ <span onmouseout="hideTip(event, 'fs14', 16)" onmouseover="showTip(event, 'fs14', 16)" class="f">createNode</span> <span onmouseout="hideTip(event, 'fs13', 17)" onmouseover="showTip(event, 'fs13', 17)" class="i">node</span> @&gt;
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs15', 18)" onmouseover="showTip(event, 'fs15', 18)" class="f">executeWriteQuery</span> <span onmouseout="hideTip(event, 'fs4', 19)" onmouseover="showTip(event, 'fs4', 19)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs16', 20)" onmouseover="showTip(event, 'fs16', 20)" class="i">Cypher</span>
+</code></pre></td>
+</tr>
+</table>
+<p>Query all nodes of a specific type</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs17', 21)" onmouseover="showTip(event, 'fs17', 21)" class="i">results</span> <span class="o">=</span> 
+    &lt;@ <span class="k">let</span> <span onmouseout="hideTip(event, 'fs18', 22)" onmouseover="showTip(event, 'fs18', 22)" class="i">n</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 23)" onmouseover="showTip(event, 'fs19', 23)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs9', 24)" onmouseover="showTip(event, 'fs9', 24)" class="t">UserNode</span><span class="o">&gt;</span>
+       <span onmouseout="hideTip(event, 'fs20', 25)" onmouseover="showTip(event, 'fs20', 25)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs18', 26)" onmouseover="showTip(event, 'fs18', 26)" class="i">n</span>
+       <span onmouseout="hideTip(event, 'fs21', 27)" onmouseover="showTip(event, 'fs21', 27)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs18', 28)" onmouseover="showTip(event, 'fs18', 28)" class="i">n</span> @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs22', 29)" onmouseover="showTip(event, 'fs22', 29)" class="f">executeReadQuery</span> <span onmouseout="hideTip(event, 'fs4', 30)" onmouseover="showTip(event, 'fs4', 30)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs16', 31)" onmouseover="showTip(event, 'fs16', 31)" class="i">Cypher</span>
+</code></pre></td>
+</tr>
+</table>
 
+<div class="tip" id="fs1">namespace System</div>
+<div class="tip" id="fs2">namespace Neo4jClient</div>
+<div class="tip" id="fs3">namespace Neo4jClient.FsQuotations</div>
+<div class="tip" id="fs4">val client : GraphClient<br /><br />Full name: Tutorial.client</div>
+<div class="tip" id="fs5">Multiple items<br />type GraphClient =<br />&#160;&#160;new : rootUri:Uri * httpClient:IHttpClient -&gt; GraphClient + 2 overloads<br />&#160;&#160;member BatchEndpoint : Uri<br />&#160;&#160;member BeginTransaction : unit -&gt; ITransaction + 1 overload<br />&#160;&#160;member CheckIndexExists : indexName:string * indexFor:IndexFor -&gt; bool<br />&#160;&#160;member Connect : ?configuration:NeoServerConfiguration -&gt; unit<br />&#160;&#160;member Create&lt;&#39;TNode&gt; : node:&#39;TNode * relationships:IEnumerable&lt;IRelationshipAllowingParticipantNode&lt;&#39;TNode&gt;&gt; * indexEntries:IEnumerable&lt;IndexEntry&gt; -&gt; NodeReference&lt;&#39;TNode&gt;<br />&#160;&#160;member CreateIndex : indexName:string * config:IndexConfiguration * indexFor:IndexFor -&gt; unit<br />&#160;&#160;member CreateRelationship&lt;&#39;TSourceNode, &#39;TRelationship&gt; : sourceNodeReference:NodeReference&lt;&#39;TSourceNode&gt; * relationship:&#39;TRelationship -&gt; RelationshipReference<br />&#160;&#160;member Cypher : ICypherFluentQuery<br />&#160;&#160;member CypherCapabilities : CypherCapabilities<br />&#160;&#160;...<br /><br />Full name: Neo4jClient.GraphClient<br /><br />--------------------<br />GraphClient(rootUri: Uri, httpClient: Execution.IHttpClient) : unit<br />GraphClient(rootUri: Uri, ?username: string, ?password: string) : unit<br />GraphClient(rootUri: Uri, expect100Continue: bool, useNagleAlgorithm: bool, ?username: string, ?password: string) : unit</div>
+<div class="tip" id="fs6">Multiple items<br />type Uri =<br />&#160;&#160;new : uriString:string -&gt; Uri + 5 overloads<br />&#160;&#160;member AbsolutePath : string<br />&#160;&#160;member AbsoluteUri : string<br />&#160;&#160;member Authority : string<br />&#160;&#160;member DnsSafeHost : string<br />&#160;&#160;member Equals : comparand:obj -&gt; bool<br />&#160;&#160;member Fragment : string<br />&#160;&#160;member GetComponents : components:UriComponents * format:UriFormat -&gt; string<br />&#160;&#160;member GetHashCode : unit -&gt; int<br />&#160;&#160;member GetLeftPart : part:UriPartial -&gt; string<br />&#160;&#160;...<br /><br />Full name: System.Uri<br /><br />--------------------<br />Uri(uriString: string) : unit<br />Uri(uriString: string, uriKind: UriKind) : unit<br />Uri(baseUri: Uri, relativeUri: string) : unit<br />Uri(baseUri: Uri, relativeUri: Uri) : unit</div>
+<div class="tip" id="fs7">GraphClient.Connect(?configuration: NeoServerConfiguration) : unit</div>
+<div class="tip" id="fs8">Multiple items<br />type CLIMutableAttribute =<br />&#160;&#160;inherit Attribute<br />&#160;&#160;new : unit -&gt; CLIMutableAttribute<br /><br />Full name: Microsoft.FSharp.Core.CLIMutableAttribute<br /><br />--------------------<br />new : unit -&gt; CLIMutableAttribute</div>
+<div class="tip" id="fs9">type UserNode =<br />&#160;&#160;{FacebookId: string;}<br />&#160;&#160;interface INeo4jNode<br /><br />Full name: Tutorial.UserNode</div>
+<div class="tip" id="fs10">UserNode.FacebookId: string</div>
+<div class="tip" id="fs11">Multiple items<br />val string : value:&#39;T -&gt; string<br /><br />Full name: Microsoft.FSharp.Core.Operators.string<br /><br />--------------------<br />type string = String<br /><br />Full name: Microsoft.FSharp.Core.string</div>
+<div class="tip" id="fs12">type INeo4jNode<br /><br />Full name: Neo4jClient.FsQuotations.INeo4jNode</div>
+<div class="tip" id="fs13">val node : UserNode<br /><br />Full name: Tutorial.node</div>
+<div class="tip" id="fs14">val createNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.createNode</div>
+<div class="tip" id="fs15">val executeWriteQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;unit&gt; -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeWriteQuery</div>
+<div class="tip" id="fs16">property GraphClient.Cypher: Cypher.ICypherFluentQuery</div>
+<div class="tip" id="fs17">val results : seq&lt;UserNode&gt;<br /><br />Full name: Tutorial.results</div>
+<div class="tip" id="fs18">val n : UserNode</div>
+<div class="tip" id="fs19">val declareNode&lt;&#39;T (requires &#39;T :&gt; INeo4jNode)&gt; : #INeo4jNode<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.declareNode</div>
+<div class="tip" id="fs20">val matchNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.matchNode</div>
+<div class="tip" id="fs21">val returnResults : &#39;T -&gt; &#39;T<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.returnResults</div>
+<div class="tip" id="fs22">val executeReadQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;&#39;T&gt; -&gt; seq&lt;&#39;T&gt;<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeReadQuery</div>
 
         </div>
         <div class="span3">

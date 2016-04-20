@@ -54,14 +54,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '1', 1)" onmouseover="showTip(event, '1', 1)">
-            asyncExecuteWithoutResults(query)
+            getNeo4jKeyName(typeInfo)
           </code>
           <div class="tip" id="1">
-            <strong>Signature:</strong> query:ICypherFluentQuery -&gt; Async&lt;unit&gt;<br />
+            <strong>Signature:</strong> typeInfo:Type -&gt; string<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L147-147" class="github-link">
+            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L56-56" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -72,14 +72,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '2', 2)" onmouseover="showTip(event, '2', 2)">
-            createNode(node query)
+            mergeNode(node query)
           </code>
           <div class="tip" id="2">
             <strong>Signature:</strong> node:&#39;T -&gt; query:ICypherFluentQuery -&gt; ICypherFluentQuery<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L80-80" class="github-link">
+            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L107-107" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -90,14 +90,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '3', 3)" onmouseover="showTip(event, '3', 3)">
-            createNodeAndUniquelyRelateTo(...)
+            raiseNeo4jNodeTypeException()
           </code>
           <div class="tip" id="3">
-            <strong>Signature:</strong> sourceNode:NodeMatch&lt;&#39;TSourceKey&gt; -&gt; relationship:&#39;TRelationship -&gt; targetNodeToCreate:&#39;TTargetNode -&gt; query:ICypherFluentQuery -&gt; ICypherFluentQuery<br />
-                          <strong>Type parameters:</strong> 'TSourceKey, 'TRelationship, 'TTargetNode          </div>
+            <strong>Signature:</strong> unit -&gt; ICypherFluentQuery<br />
+                          <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L87-87" class="github-link">
+            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L23-23" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -108,14 +108,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '4', 4)" onmouseover="showTip(event, '4', 4)">
-            deleteRelationship(...)
+            raiseNeo4jNodeTypeExceptionFromType(...)
           </code>
           <div class="tip" id="4">
-            <strong>Signature:</strong> sourceNode:NodeMatch&lt;&#39;TSourceKey&gt; -&gt; relationshipType:Type -&gt; targetNode:NodeMatch&lt;&#39;TTargetKey&gt; -&gt; query:ICypherFluentQuery -&gt; ICypherFluentQuery<br />
-                          <strong>Type parameters:</strong> 'TSourceKey, 'TTargetKey          </div>
+            <strong>Signature:</strong> typeinfo:Type -&gt; &#39;?7307<br />
+                          <strong>Type parameters:</strong> '?7307          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L108-108" class="github-link">
+            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L20-20" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -126,194 +126,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '5', 5)" onmouseover="showTip(event, '5', 5)">
-            executeWithoutResults(query)
-          </code>
-          <div class="tip" id="5">
-            <strong>Signature:</strong> query:ICypherFluentQuery -&gt; unit<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L144-144" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '6', 6)" onmouseover="showTip(event, '6', 6)">
-            getNeo4jKeyName(typeInfo)
-          </code>
-          <div class="tip" id="6">
-            <strong>Signature:</strong> typeInfo:Type -&gt; string<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L55-55" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '7', 7)" onmouseover="showTip(event, '7', 7)">
-            getNodes(query)
-          </code>
-          <div class="tip" id="7">
-            <strong>Signature:</strong> query:ICypherFluentQuery -&gt; ICypherFluentQuery&lt;&#39;T&gt;<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L139-139" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '8', 8)" onmouseover="showTip(event, '8', 8)">
-            getResults(query)
-          </code>
-          <div class="tip" id="8">
-            <strong>Signature:</strong> query:ICypherFluentQuery&lt;&#39;T&gt; -&gt; IEnumerable&lt;&#39;T&gt;<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L151-151" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '9', 9)" onmouseover="showTip(event, '9', 9)">
-            getResultsAsync(query)
-          </code>
-          <div class="tip" id="9">
-            <strong>Signature:</strong> query:ICypherFluentQuery&lt;&#39;T&gt; -&gt; Async&lt;IEnumerable&lt;&#39;T&gt;&gt;<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L152-152" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '10', 10)" onmouseover="showTip(event, '10', 10)">
-            matchNodes(query)
-          </code>
-          <div class="tip" id="10">
-            <strong>Signature:</strong> query:ICypherFluentQuery -&gt; ICypherFluentQuery<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L131-131" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '11', 11)" onmouseover="showTip(event, '11', 11)">
-            mergeNode(node query)
-          </code>
-          <div class="tip" id="11">
-            <strong>Signature:</strong> node:&#39;T -&gt; query:ICypherFluentQuery -&gt; ICypherFluentQuery<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L118-118" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '12', 12)" onmouseover="showTip(event, '12', 12)">
-            raiseNeo4jNodeTypeException()
-          </code>
-          <div class="tip" id="12">
-            <strong>Signature:</strong> unit -&gt; ICypherFluentQuery<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L22-22" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '13', 13)" onmouseover="showTip(event, '13', 13)">
-            raiseNeo4jNodeTypeExceptionFromType(...)
-          </code>
-          <div class="tip" id="13">
-            <strong>Signature:</strong> typeinfo:Type -&gt; &#39;?7307<br />
-                          <strong>Type parameters:</strong> '?7307          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L19-19" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '14', 14)" onmouseover="showTip(event, '14', 14)">
-            returnNodes(query)
-          </code>
-          <div class="tip" id="14">
-            <strong>Signature:</strong> query:ICypherFluentQuery -&gt; ICypherFluentQuery&lt;&#39;T&gt;<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L134-134" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '15', 15)" onmouseover="showTip(event, '15', 15)">
             tryGetNeo4jKeyName(typeInfo)
           </code>
-          <div class="tip" id="15">
+          <div class="tip" id="5">
             <strong>Signature:</strong> typeInfo:Type -&gt; string option<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L42-42" class="github-link">
+            <a href="http://github.com/OkayX6/Neo4jClient.FsQuotations/tree/master/src/Neo4jClient.FsQuotations/Cypher.fs#L43-43" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
