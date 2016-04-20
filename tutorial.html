@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Introducing your project
+    <title>Basic usage
 </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="Neo4jClient with F# quotations"/>
@@ -33,7 +33,8 @@
       <div class="row">
         <div class="span9" id="main">
           
-<h1><a name="Introducing-your-project" class="anchor" href="#Introducing-your-project">Introducing your project</a></h1>
+<h1><a name="Basic-usage" class="anchor" href="#Basic-usage">Basic usage</a></h1>
+<h2><a name="Dependencies" class="anchor" href="#Dependencies">Dependencies</a></h2>
 <p>Reference this library (dependency on Neo4jClient) and create a Neo4j GraphClient().</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
@@ -57,7 +58,9 @@
 </code></pre></td>
 </tr>
 </table>
-<p>Define nodes &amp; relationships in your model</p>
+<h2><a name="Define-your-model" class="anchor" href="#Define-your-model">Define your model</a></h2>
+<p>Declare nodes &amp; relationships in your model (by inheriting from <code>INeo4jNode</code> or
+<code>INeo4jRelationship</code> interfaces).</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -70,7 +73,7 @@
 </code></pre></td>
 </tr>
 </table>
-<p>Create a node</p>
+<h2><a name="Create-a-node" class="anchor" href="#Create-a-node">Create a node</a></h2>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -81,7 +84,7 @@
 </code></pre></td>
 </tr>
 </table>
-<p>Query all nodes of a specific type</p>
+<h2><a name="Query-all-nodes-of-a-specific-type" class="anchor" href="#Query-all-nodes-of-a-specific-type">Query all nodes of a specific type</a></h2>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
