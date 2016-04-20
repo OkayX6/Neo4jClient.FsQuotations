@@ -54,17 +54,18 @@ for id in [ "Okay"; "TT"; "Opwal" ] do
 ## Get all nodes with specific label
 *)
 
-let allUsers = 
+let allUsers =
     <@ let user = declareNode<UserNode>
        matchNode user
        returnResults user @>
     |> executeReadQuery client.Cypher
+    |> Seq.toList
 
-(** Results: *)
+(** ### Results *)
 (*** include-value: allUsers ***)
 
 (**
-Get specific user
+## Get specific user
 *)
 let userTT =
     <@ let user = declareNode<UserNode>
@@ -73,5 +74,5 @@ let userTT =
        returnResults user @>
     |> executeReadQuery client.Cypher
 
-(** Results: *)
+(** ### Results *)
 (*** include-value: userTT ***)

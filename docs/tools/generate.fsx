@@ -107,6 +107,7 @@ let buildReference () =
 
 // Build documentation from `fsx` and `md` files in `docs/content`
 let buildDocumentation () =
+  let fsi = FsiEvaluator()
 
   // First, process files which are placed in the content root directory.
 
@@ -114,7 +115,8 @@ let buildDocumentation () =
     ( content, docTemplate, output, replacements = ("root", root)::info,
       layoutRoots = layoutRootsAll.["en"],
       generateAnchors = true,
-      processRecursive = false)
+      processRecursive = false,
+      fsiEvaluator = fsi)
 
   // And then process files which are placed in the sub directories
   // (some sub directories might be for specific language).
@@ -133,7 +135,8 @@ let buildDocumentation () =
     Literate.ProcessDirectory
       ( dir, docTemplate, output @@ dirname, replacements = ("root", root)::info,
         layoutRoots = layoutRoots,
-        generateAnchors = true )
+        generateAnchors = true,
+        fsiEvaluator = fsi)
 
 // Generate
 copyFiles()
