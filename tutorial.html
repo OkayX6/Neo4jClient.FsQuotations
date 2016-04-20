@@ -13,7 +13,7 @@
     <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
     <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
 
-    <link type="text/css" rel="stylesheet" href="/Neo4jClient.FsQuotations/content/style_light.css" />
+    <link type="text/css" rel="stylesheet" href="/Neo4jClient.FsQuotations/content/style.css" />
     <script type="text/javascript" src="/Neo4jClient.FsQuotations/content/tips.js"></script>
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -62,15 +62,31 @@
 <p>Declare nodes &amp; relationships in your model (by inheriting from <code>INeo4jNode</code> or
 <code>INeo4jRelationship</code> interfaces).</p>
 <p>We will define users.</p>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[&lt;<span onmouseout="hideTip(event, 'fs10', 13)" onmouseover="showTip(event, 'fs10', 13)" class="t">CLIMutable</span>&gt;]
 <span class="k">type</span> <span onmouseout="hideTip(event, 'fs11', 14)" onmouseover="showTip(event, 'fs11', 14)" class="t">UserNode</span> <span class="o">=</span> 
     { <span onmouseout="hideTip(event, 'fs12', 15)" onmouseover="showTip(event, 'fs12', 15)" class="i">FacebookId</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs13', 16)" onmouseover="showTip(event, 'fs13', 16)" class="t">string</span> }
     <span class="k">interface</span> <span onmouseout="hideTip(event, 'fs14', 17)" onmouseover="showTip(event, 'fs14', 17)" class="t">INeo4jNode</span>
+
+[&lt;<span onmouseout="hideTip(event, 'fs10', 18)" onmouseover="showTip(event, 'fs10', 18)" class="t">CLIMutable</span>&gt;]
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs15', 19)" onmouseover="showTip(event, 'fs15', 19)" class="t">HouseholdNode</span> <span class="o">=</span> 
+    { <span onmouseout="hideTip(event, 'fs16', 20)" onmouseover="showTip(event, 'fs16', 20)" class="i">Name</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs13', 21)" onmouseover="showTip(event, 'fs13', 21)" class="t">string</span> }
+    <span class="k">interface</span> <span onmouseout="hideTip(event, 'fs14', 22)" onmouseover="showTip(event, 'fs14', 22)" class="t">INeo4jNode</span>
+
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs17', 23)" onmouseover="showTip(event, 'fs17', 23)" class="t">IsResidentOf</span>() <span class="o">=</span>
+    <span class="k">interface</span> <span onmouseout="hideTip(event, 'fs18', 24)" onmouseover="showTip(event, 'fs18', 24)" class="t">INeo4jRelationship</span>
 </code></pre></td>
 </tr>
 </table>
@@ -80,10 +96,10 @@
 <span class="l">3: </span>
 <span class="l">4: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">for</span> <span onmouseout="hideTip(event, 'fs15', 18)" onmouseover="showTip(event, 'fs15', 18)" class="i">id</span> <span class="k">in</span> [ <span class="s">&quot;Okay&quot;</span>; <span class="s">&quot;TT&quot;</span>; <span class="s">&quot;Opwal&quot;</span> ] <span class="k">do</span>
-    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs16', 19)" onmouseover="showTip(event, 'fs16', 19)" class="i">user</span> <span class="o">=</span> { <span class="i">FacebookId</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs15', 20)" onmouseover="showTip(event, 'fs15', 20)" class="i">id</span> }
-    &lt;@ <span onmouseout="hideTip(event, 'fs17', 21)" onmouseover="showTip(event, 'fs17', 21)" class="f">createNode</span> <span onmouseout="hideTip(event, 'fs16', 22)" onmouseover="showTip(event, 'fs16', 22)" class="i">user</span> @&gt;
-    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs18', 23)" onmouseover="showTip(event, 'fs18', 23)" class="f">executeWriteQuery</span> <span onmouseout="hideTip(event, 'fs4', 24)" onmouseover="showTip(event, 'fs4', 24)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 25)" onmouseover="showTip(event, 'fs8', 25)" class="i">Cypher</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">for</span> <span onmouseout="hideTip(event, 'fs19', 25)" onmouseover="showTip(event, 'fs19', 25)" class="i">id</span> <span class="k">in</span> [ <span class="s">&quot;Okay&quot;</span>; <span class="s">&quot;TT&quot;</span>; <span class="s">&quot;Opwal&quot;</span> ] <span class="k">do</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs20', 26)" onmouseover="showTip(event, 'fs20', 26)" class="i">user</span> <span class="o">=</span> { <span class="i">FacebookId</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 27)" onmouseover="showTip(event, 'fs19', 27)" class="i">id</span> }
+    &lt;@ <span onmouseout="hideTip(event, 'fs21', 28)" onmouseover="showTip(event, 'fs21', 28)" class="f">createNode</span> <span onmouseout="hideTip(event, 'fs20', 29)" onmouseover="showTip(event, 'fs20', 29)" class="i">user</span> @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs22', 30)" onmouseover="showTip(event, 'fs22', 30)" class="f">executeWriteQuery</span> <span onmouseout="hideTip(event, 'fs4', 31)" onmouseover="showTip(event, 'fs4', 31)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 32)" onmouseover="showTip(event, 'fs8', 32)" class="i">Cypher</span>
 </code></pre></td>
 </tr>
 </table>
@@ -95,12 +111,12 @@
 <span class="l">5: </span>
 <span class="l">6: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs19', 26)" onmouseover="showTip(event, 'fs19', 26)" class="i">allUsers</span> <span class="o">=</span>
-    &lt;@ <span class="k">let</span> <span onmouseout="hideTip(event, 'fs16', 27)" onmouseover="showTip(event, 'fs16', 27)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs20', 28)" onmouseover="showTip(event, 'fs20', 28)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 29)" onmouseover="showTip(event, 'fs11', 29)" class="t">UserNode</span><span class="o">&gt;</span>
-       <span onmouseout="hideTip(event, 'fs21', 30)" onmouseover="showTip(event, 'fs21', 30)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs16', 31)" onmouseover="showTip(event, 'fs16', 31)" class="i">user</span>
-       <span onmouseout="hideTip(event, 'fs22', 32)" onmouseover="showTip(event, 'fs22', 32)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs16', 33)" onmouseover="showTip(event, 'fs16', 33)" class="i">user</span> @&gt;
-    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs23', 34)" onmouseover="showTip(event, 'fs23', 34)" class="f">executeReadQuery</span> <span onmouseout="hideTip(event, 'fs4', 35)" onmouseover="showTip(event, 'fs4', 35)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 36)" onmouseover="showTip(event, 'fs8', 36)" class="i">Cypher</span>
-    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs24', 37)" onmouseover="showTip(event, 'fs24', 37)" class="t">Seq</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs25', 38)" onmouseover="showTip(event, 'fs25', 38)" class="f">toList</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs23', 33)" onmouseover="showTip(event, 'fs23', 33)" class="i">allUsers</span> <span class="o">=</span>
+    &lt;@ <span class="k">let</span> <span onmouseout="hideTip(event, 'fs20', 34)" onmouseover="showTip(event, 'fs20', 34)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs24', 35)" onmouseover="showTip(event, 'fs24', 35)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 36)" onmouseover="showTip(event, 'fs11', 36)" class="t">UserNode</span><span class="o">&gt;</span>
+       <span onmouseout="hideTip(event, 'fs25', 37)" onmouseover="showTip(event, 'fs25', 37)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs20', 38)" onmouseover="showTip(event, 'fs20', 38)" class="i">user</span>
+       <span onmouseout="hideTip(event, 'fs26', 39)" onmouseover="showTip(event, 'fs26', 39)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs20', 40)" onmouseover="showTip(event, 'fs20', 40)" class="i">user</span> @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs27', 41)" onmouseover="showTip(event, 'fs27', 41)" class="f">executeReadQuery</span> <span onmouseout="hideTip(event, 'fs4', 42)" onmouseover="showTip(event, 'fs4', 42)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 43)" onmouseover="showTip(event, 'fs8', 43)" class="i">Cypher</span>
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs28', 44)" onmouseover="showTip(event, 'fs28', 44)" class="t">Seq</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs29', 45)" onmouseover="showTip(event, 'fs29', 45)" class="f">toList</span>
 </code></pre></td>
 </tr>
 </table>
@@ -114,17 +130,68 @@
 <span class="l">5: </span>
 <span class="l">6: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs26', 39)" onmouseover="showTip(event, 'fs26', 39)" class="i">userTT</span> <span class="o">=</span>
-    &lt;@ <span class="k">let</span> <span onmouseout="hideTip(event, 'fs16', 40)" onmouseover="showTip(event, 'fs16', 40)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs20', 41)" onmouseover="showTip(event, 'fs20', 41)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 42)" onmouseover="showTip(event, 'fs11', 42)" class="t">UserNode</span><span class="o">&gt;</span>
-       <span onmouseout="hideTip(event, 'fs21', 43)" onmouseover="showTip(event, 'fs21', 43)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs16', 44)" onmouseover="showTip(event, 'fs16', 44)" class="i">user</span>
-       <span onmouseout="hideTip(event, 'fs27', 45)" onmouseover="showTip(event, 'fs27', 45)" class="i">where</span> (<span onmouseout="hideTip(event, 'fs16', 46)" onmouseover="showTip(event, 'fs16', 46)" class="i">user</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 47)" onmouseover="showTip(event, 'fs12', 47)" class="i">FacebookId</span> <span class="o">=</span> <span class="s">&quot;TT&quot;</span>)
-       <span onmouseout="hideTip(event, 'fs22', 48)" onmouseover="showTip(event, 'fs22', 48)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs16', 49)" onmouseover="showTip(event, 'fs16', 49)" class="i">user</span> @&gt;
-    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs23', 50)" onmouseover="showTip(event, 'fs23', 50)" class="f">executeReadQuery</span> <span onmouseout="hideTip(event, 'fs4', 51)" onmouseover="showTip(event, 'fs4', 51)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 52)" onmouseover="showTip(event, 'fs8', 52)" class="i">Cypher</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs30', 46)" onmouseover="showTip(event, 'fs30', 46)" class="i">userTT</span> <span class="o">=</span>
+    &lt;@ <span class="k">let</span> <span onmouseout="hideTip(event, 'fs20', 47)" onmouseover="showTip(event, 'fs20', 47)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs24', 48)" onmouseover="showTip(event, 'fs24', 48)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 49)" onmouseover="showTip(event, 'fs11', 49)" class="t">UserNode</span><span class="o">&gt;</span>
+       <span onmouseout="hideTip(event, 'fs25', 50)" onmouseover="showTip(event, 'fs25', 50)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs20', 51)" onmouseover="showTip(event, 'fs20', 51)" class="i">user</span>
+       <span onmouseout="hideTip(event, 'fs31', 52)" onmouseover="showTip(event, 'fs31', 52)" class="i">where</span> (<span onmouseout="hideTip(event, 'fs20', 53)" onmouseover="showTip(event, 'fs20', 53)" class="i">user</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 54)" onmouseover="showTip(event, 'fs12', 54)" class="i">FacebookId</span> <span class="o">=</span> <span class="s">&quot;TT&quot;</span>)
+       <span onmouseout="hideTip(event, 'fs26', 55)" onmouseover="showTip(event, 'fs26', 55)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs20', 56)" onmouseover="showTip(event, 'fs20', 56)" class="i">user</span> @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs27', 57)" onmouseover="showTip(event, 'fs27', 57)" class="f">executeReadQuery</span> <span onmouseout="hideTip(event, 'fs4', 58)" onmouseover="showTip(event, 'fs4', 58)" class="i">client</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs8', 59)" onmouseover="showTip(event, 'fs8', 59)" class="i">Cypher</span>
 </code></pre></td>
 </tr>
 </table>
 <h3><a name="Results-1" class="anchor" href="#Results-1">Results</a></h3>
 <table class="pre"><tr><td><pre><code>seq [{FacebookId = "TT";}]</code></pre></td></tr></table>
+<h2><a name="Create-node-and-relate-to-it" class="anchor" href="#Create-node-and-relate-to-it">Create node and relate to it</a></h2>
+<p>Create a <code>HouseholdNode</code>, mention that <code>UserNode</code> <em>Opwal</em> has a <code>IsResidentOf</code> relationship with it.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">do</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs32', 60)" onmouseover="showTip(event, 'fs32', 60)" class="i">newHousehold</span><span class="o">:</span> <span onmouseout="hideTip(event, 'fs15', 61)" onmouseover="showTip(event, 'fs15', 61)" class="t">HouseholdNode</span> <span class="o">=</span> { <span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;Paris 10&quot;</span> }
+    &lt;@
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs20', 62)" onmouseover="showTip(event, 'fs20', 62)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs24', 63)" onmouseover="showTip(event, 'fs24', 63)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 64)" onmouseover="showTip(event, 'fs11', 64)" class="t">UserNode</span><span class="o">&gt;</span>
+        <span onmouseout="hideTip(event, 'fs25', 65)" onmouseover="showTip(event, 'fs25', 65)" class="i">matchNode</span> <span onmouseout="hideTip(event, 'fs20', 66)" onmouseover="showTip(event, 'fs20', 66)" class="i">user</span>
+        <span onmouseout="hideTip(event, 'fs31', 67)" onmouseover="showTip(event, 'fs31', 67)" class="i">where</span> (<span onmouseout="hideTip(event, 'fs20', 68)" onmouseover="showTip(event, 'fs20', 68)" class="i">user</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 69)" onmouseover="showTip(event, 'fs12', 69)" class="i">FacebookId</span> <span class="o">=</span> <span class="s">&quot;Opwal&quot;</span>)
+        <span onmouseout="hideTip(event, 'fs33', 70)" onmouseover="showTip(event, 'fs33', 70)" class="i">createRightRelation</span> <span onmouseout="hideTip(event, 'fs20', 71)" onmouseover="showTip(event, 'fs20', 71)" class="i">user</span> <span onmouseout="hideTip(event, 'fs34', 72)" onmouseover="showTip(event, 'fs34', 72)" class="i">declareRelationship</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs17', 73)" onmouseover="showTip(event, 'fs17', 73)" class="t">IsResidentOf</span><span class="o">&gt;</span> <span onmouseout="hideTip(event, 'fs32', 74)" onmouseover="showTip(event, 'fs32', 74)" class="i">newHousehold</span>
+    @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs22', 75)" onmouseover="showTip(event, 'fs22', 75)" class="f">executeWriteQuery</span> <span class="i">neo4jClient</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 76)" onmouseover="showTip(event, 'fs35', 76)" class="i">Cypher</span>
+</code></pre></td>
+</tr>
+</table>
+<p>List all households where <code>UserNode</code> <em>Opwal</em> resides:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs36', 77)" onmouseover="showTip(event, 'fs36', 77)" class="i">opwalHouseholds</span> <span class="o">=</span>
+    &lt;@
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs20', 78)" onmouseover="showTip(event, 'fs20', 78)" class="i">user</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs24', 79)" onmouseover="showTip(event, 'fs24', 79)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 80)" onmouseover="showTip(event, 'fs11', 80)" class="t">UserNode</span><span class="o">&gt;</span>
+    <span class="k">let</span> <span onmouseout="hideTip(event, 'fs37', 81)" onmouseover="showTip(event, 'fs37', 81)" class="i">household</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs24', 82)" onmouseover="showTip(event, 'fs24', 82)" class="i">declareNode</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs15', 83)" onmouseover="showTip(event, 'fs15', 83)" class="t">HouseholdNode</span><span class="o">&gt;</span>
+    <span onmouseout="hideTip(event, 'fs38', 84)" onmouseover="showTip(event, 'fs38', 84)" class="i">matchRightRelation</span> <span onmouseout="hideTip(event, 'fs20', 85)" onmouseover="showTip(event, 'fs20', 85)" class="i">user</span> <span onmouseout="hideTip(event, 'fs34', 86)" onmouseover="showTip(event, 'fs34', 86)" class="i">declareRelationship</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs17', 87)" onmouseover="showTip(event, 'fs17', 87)" class="t">IsResidentOf</span><span class="o">&gt;</span> <span onmouseout="hideTip(event, 'fs37', 88)" onmouseover="showTip(event, 'fs37', 88)" class="i">household</span>
+    <span onmouseout="hideTip(event, 'fs31', 89)" onmouseover="showTip(event, 'fs31', 89)" class="i">where</span> (<span onmouseout="hideTip(event, 'fs20', 90)" onmouseover="showTip(event, 'fs20', 90)" class="i">user</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 91)" onmouseover="showTip(event, 'fs12', 91)" class="i">FacebookId</span> <span class="o">=</span> <span class="s">&quot;Opwal&quot;</span>)
+    <span onmouseout="hideTip(event, 'fs26', 92)" onmouseover="showTip(event, 'fs26', 92)" class="i">returnResults</span> <span onmouseout="hideTip(event, 'fs37', 93)" onmouseover="showTip(event, 'fs37', 93)" class="i">household</span>
+    @&gt;
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs27', 94)" onmouseover="showTip(event, 'fs27', 94)" class="f">executeReadQuery</span> <span class="i">neo4jClient</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 95)" onmouseover="showTip(event, 'fs35', 95)" class="i">Cypher</span>
+    <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs28', 96)" onmouseover="showTip(event, 'fs28', 96)" class="t">Seq</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs29', 97)" onmouseover="showTip(event, 'fs29', 97)" class="f">toList</span>
+</code></pre></td>
+</tr>
+</table>
+<h3><a name="Results-2" class="anchor" href="#Results-2">Results</a></h3>
+<table class="pre"><tr><td><pre><code>No value has been returned</code></pre></td></tr></table>
 
 <div class="tip" id="fs1">namespace System</div>
 <div class="tip" id="fs2">namespace Neo4jClient</div>
@@ -140,19 +207,30 @@
 <div class="tip" id="fs12">UserNode.FacebookId: string</div>
 <div class="tip" id="fs13">Multiple items<br />val string : value:&#39;T -&gt; string<br /><br />Full name: Microsoft.FSharp.Core.Operators.string<br /><br />--------------------<br />type string = String<br /><br />Full name: Microsoft.FSharp.Core.string</div>
 <div class="tip" id="fs14">type INeo4jNode<br /><br />Full name: Neo4jClient.FsQuotations.INeo4jNode</div>
-<div class="tip" id="fs15">val id : string</div>
-<div class="tip" id="fs16">val user : UserNode</div>
-<div class="tip" id="fs17">val createNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.createNode</div>
-<div class="tip" id="fs18">val executeWriteQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;unit&gt; -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeWriteQuery</div>
-<div class="tip" id="fs19">val allUsers : UserNode list<br /><br />Full name: Tutorial.allUsers</div>
-<div class="tip" id="fs20">val declareNode&lt;&#39;T (requires &#39;T :&gt; INeo4jNode)&gt; : #INeo4jNode<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.declareNode</div>
-<div class="tip" id="fs21">val matchNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.matchNode</div>
-<div class="tip" id="fs22">val returnResults : &#39;T -&gt; &#39;T<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.returnResults</div>
-<div class="tip" id="fs23">val executeReadQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;&#39;T&gt; -&gt; seq&lt;&#39;T&gt;<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeReadQuery</div>
-<div class="tip" id="fs24">module Seq<br /><br />from Microsoft.FSharp.Collections</div>
-<div class="tip" id="fs25">val toList : source:seq&lt;&#39;T&gt; -&gt; &#39;T list<br /><br />Full name: Microsoft.FSharp.Collections.Seq.toList</div>
-<div class="tip" id="fs26">val userTT : seq&lt;UserNode&gt;<br /><br />Full name: Tutorial.userTT</div>
-<div class="tip" id="fs27">val where : bool -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.where</div>
+<div class="tip" id="fs15">type HouseholdNode =<br />&#160;&#160;{Name: string;}<br />&#160;&#160;interface INeo4jNode<br /><br />Full name: Tutorial.HouseholdNode</div>
+<div class="tip" id="fs16">HouseholdNode.Name: string</div>
+<div class="tip" id="fs17">Multiple items<br />type IsResidentOf =<br />&#160;&#160;interface INeo4jRelationship<br />&#160;&#160;new : unit -&gt; IsResidentOf<br /><br />Full name: Tutorial.IsResidentOf<br /><br />--------------------<br />new : unit -&gt; IsResidentOf</div>
+<div class="tip" id="fs18">type INeo4jRelationship<br /><br />Full name: Neo4jClient.FsQuotations.INeo4jRelationship</div>
+<div class="tip" id="fs19">val id : string</div>
+<div class="tip" id="fs20">val user : UserNode</div>
+<div class="tip" id="fs21">val createNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.createNode</div>
+<div class="tip" id="fs22">val executeWriteQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;unit&gt; -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeWriteQuery</div>
+<div class="tip" id="fs23">val allUsers : UserNode list<br /><br />Full name: Tutorial.allUsers</div>
+<div class="tip" id="fs24">val declareNode&lt;&#39;T (requires &#39;T :&gt; INeo4jNode)&gt; : #INeo4jNode<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.declareNode</div>
+<div class="tip" id="fs25">val matchNode : #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.matchNode</div>
+<div class="tip" id="fs26">val returnResults : &#39;T -&gt; &#39;T<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.returnResults</div>
+<div class="tip" id="fs27">val executeReadQuery : cypher:Cypher.ICypherFluentQuery -&gt; query:Quotations.Expr&lt;&#39;T&gt; -&gt; seq&lt;&#39;T&gt;<br /><br />Full name: Neo4jClient.FsQuotations.QuotationInterpreter.executeReadQuery</div>
+<div class="tip" id="fs28">module Seq<br /><br />from Microsoft.FSharp.Collections</div>
+<div class="tip" id="fs29">val toList : source:seq&lt;&#39;T&gt; -&gt; &#39;T list<br /><br />Full name: Microsoft.FSharp.Collections.Seq.toList</div>
+<div class="tip" id="fs30">val userTT : seq&lt;UserNode&gt;<br /><br />Full name: Tutorial.userTT</div>
+<div class="tip" id="fs31">val where : bool -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.where</div>
+<div class="tip" id="fs32">val newHousehold : HouseholdNode</div>
+<div class="tip" id="fs33">val createRightRelation : #INeo4jNode -&gt; #INeo4jRelationship -&gt; #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.createRightRelation</div>
+<div class="tip" id="fs34">val declareRelationship&lt;&#39;T (requires &#39;T :&gt; INeo4jRelationship)&gt; : #INeo4jRelationship<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.declareRelationship</div>
+<div class="tip" id="fs35">Multiple items<br />module Cypher<br /><br />from Neo4jClient.FsQuotations<br /><br />--------------------<br />namespace Neo4jClient.Cypher</div>
+<div class="tip" id="fs36">val opwalHouseholds : HouseholdNode list<br /><br />Full name: Tutorial.opwalHouseholds</div>
+<div class="tip" id="fs37">val household : HouseholdNode</div>
+<div class="tip" id="fs38">val matchRightRelation : #INeo4jNode -&gt; #INeo4jRelationship -&gt; #INeo4jNode -&gt; unit<br /><br />Full name: Neo4jClient.FsQuotations.CypherQueryGrammar.matchRightRelation</div>
 
         </div>
         <div class="span3">
