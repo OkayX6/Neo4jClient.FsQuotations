@@ -7,7 +7,8 @@ open Neo4jClient.Cypher
 type Neo4jKeyAttribute() =
     inherit Attribute()
 
-type NodeMatch<'TKey> = 
+[<NoComparison>]
+type internal NodeMatch<'TKey> = 
     { Key : 'TKey
       TypeInfo : Type }
     static member Create<'T>(key: 'TKey) =
@@ -65,26 +66,14 @@ module Cypher =
             )
         )
 
-    let inline private tryGenerateMatchNode (node: 'T) nodeName =
-        tryFindNeo4jKey node
-        |> Option.map (fun (keyName, keyValue) ->
-            sprintf "(%s:%s {%s:'%O'})" nodeName typeof<'T>.Name keyName keyValue
-        )
-
     let inline private tryGenerateMatchExpr (data: NodeMatch<'TKey>) nodeName =
         tryGetNeo4jKeyName data.TypeInfo
         |> Option.map (fun keyName ->
             sprintf "%s:%s {%s:'%O'}" nodeName data.TypeInfo.Name keyName data.Key
         )
 
-    let createNode (node: 'T) (query: ICypherFluentQuery) =
-        let argName = "arg"
-        let createText = sprintf "(node:%s {%s})" typeof<'T>.Name argName
-        query.Create(createText)
-             .WithParam(argName, node)
-
     // TODO denisok: enforce INeo4jRelationship
-    let createNodeAndUniquelyRelateTo (sourceNode: NodeMatch<'TSourceKey>) (relationship: 'TRelationship) (targetNodeToCreate: 'TTargetNode) (query: ICypherFluentQuery) =
+    let internal createNodeAndUniquelyRelateTo (sourceNode: NodeMatch<'TSourceKey>) (relationship: 'TRelationship) (targetNodeToCreate: 'TTargetNode) (query: ICypherFluentQuery) =
         let sourceNodeMatchExpr' = tryGenerateMatchExpr sourceNode "sourceNode"
         match sourceNodeMatchExpr' with
         | Some sourceNodeMatchExpr ->
@@ -105,7 +94,7 @@ module Cypher =
                     ])
         | None -> raiseNeo4jNodeTypeException<'TTargetNode>()
 
-    let deleteRelationship (sourceNode: NodeMatch<'TSourceKey>) (relationshipType: Type) (targetNode: NodeMatch<'TTargetKey>) (query: ICypherFluentQuery) =
+    let internal deleteRelationship (sourceNode: NodeMatch<'TSourceKey>) (relationshipType: Type) (targetNode: NodeMatch<'TTargetKey>) (query: ICypherFluentQuery) =
         let sourceMatchExpr' = tryGenerateMatchExpr sourceNode "sourceNode"
         let targetMatchExpr' = tryGenerateMatchExpr targetNode "targetNode"
         match sourceMatchExpr', targetMatchExpr' with
@@ -127,26 +116,3 @@ module Cypher =
                  .Set(setText)
                  .WithParam(argName, node)
         | None -> raiseNeo4jNodeTypeException<'T>()
-
-    let inline matchNodes<'T> (query: ICypherFluentQuery) =
-        query.Match(sprintf "(node:%s)" typeof<'T>.Name)
-
-    let inline returnNodes<'T> (query: ICypherFluentQuery) =
-        <@ Func<_, _>(fun (node: ICypherResultItem) -> node.As<'T>()) @>
-        |> QuotationToLambdaExpression
-        |> query.Return
-
-    let inline getNodes<'T> (query: ICypherFluentQuery) =
-        query
-        |> matchNodes<'T>
-        |> returnNodes<'T>
-
-    let inline executeWithoutResults (query: ICypherFluentQuery) =
-        query.ExecuteWithoutResults()
-
-    let inline asyncExecuteWithoutResults (query: ICypherFluentQuery) =
-        query.ExecuteWithoutResultsAsync()
-        |> Async.AwaitTask
-
-    let inline getResults (query: ICypherFluentQuery<'T>) = query.Results
-    let inline getResultsAsync (query: ICypherFluentQuery<'T>) = Async.AwaitTask query.ResultsAsync
