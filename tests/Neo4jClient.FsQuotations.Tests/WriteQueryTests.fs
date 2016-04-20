@@ -11,7 +11,7 @@ let setupDbWithTestData () =
     clearAllNodes neo4jClient
 
 [<Test>]
-let ``Create multiple single nodes`` () =
+let ``Create node`` () =
     for _ in 1 .. 3 do
         let u = { FacebookId = "newNode" }
         <@
@@ -54,3 +54,32 @@ let ``Delete node`` () =
     |> executeWriteQuery neo4jClient.Cypher
 
     Assert.AreEqual(0, getUserNodes().Length, "Nodes after deletion")
+
+[<Test>]
+let ``Create and node + relation at the same time`` () =
+    // Arrange
+    createNodeAndExecute neo4jClient { FacebookId = "Parisian" }
+
+    // Act
+    let newHousehold: HouseholdNode = { Name = "Paris 10" }
+    <@
+        let parisian = declareNode<UserNode>
+        matchNode parisian
+        where (parisian.FacebookId = "Parisian")
+        createRightRelation parisian declareRelationship<IsResidentOf> newHousehold
+    @>
+    |> executeWriteQuery neo4jClient.Cypher
+
+    // Assert
+    let myHouseholdsNames =
+        <@
+        let parisian = declareNode<UserNode>
+        let household = declareNode<HouseholdNode>
+        matchRightRelation parisian declareRelationship<IsResidentOf> household
+        where (parisian.FacebookId = "Parisian")
+        returnResults household
+        @>
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.map (fun hh -> hh.Name)
+
+    CollectionAssert.Contains(myHouseholdsNames, "Paris 10", "Household names")

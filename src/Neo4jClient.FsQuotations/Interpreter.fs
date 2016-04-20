@@ -46,6 +46,8 @@ module CypherQueryGrammar =
     let where (_boolExpr: bool) = ()
 
     let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
+    let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let createLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let deleteNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
 
     let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
@@ -54,20 +56,93 @@ module CypherQueryGrammar =
 module internal QuotationsHelpers =
     let fsQuotationAssembly = matchNode.GetType().DeclaringType.Assembly
 
+    [<RequireQualifiedAccess>]
+    [<NoComparison>]
+    type internal NodeExpr =
+        | Var of var:Var
+        | NamedValue of cypherExpr:string * paramName:string * value:obj
+        member x.CypherExpr =
+            match x with
+            | Var(var) -> sprintf "(%s)" var.Name
+            | NamedValue(cypherExpr, _, _) -> cypherExpr
+        member x.Parameter =
+            match x with
+            | Var(var) -> None
+            | NamedValue(_, paramName, value) -> Some (paramName, value)
+        member x.Create(cypher: ICypherFluentQuery) =
+            match x with
+            | Var(var) -> cypher.Create(x.CypherExpr)
+            | NamedValue(cypherExpr, paramName, value) ->
+                cypher.Create(cypherExpr).WithParam(paramName, value)
+
+    [<RequireQualifiedAccess>]
+    [<NoComparison>]
+    type internal RelExpr =
+        | NamedValue of cypherExpr:string * paramName:string * value:obj
+        | TypedPattern of cypherExpr:string
+        member x.CypherExpr =
+            match x with
+            | NamedValue(cypherExpr, _, _)
+            | TypedPattern(cypherExpr) -> cypherExpr
+
+        member x.Parameter =
+            match x with
+            | NamedValue(_, paramName, value) -> Some (paramName, value)
+            | TypedPattern _ -> None
+
+        member x.Create(cypher: ICypherFluentQuery) =
+            match x with
+            | NamedValue(cypherExpr, paramName, value) ->
+                cypher.Create(cypherExpr).WithParam(paramName, value)
+            | TypedPattern(cypherExpr) -> cypher.Create(cypherExpr)
+
+    [<RequireQualifiedAccess>]
+    [<NoComparison>]
+    type internal CypherPattern =
+        | LeftRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
+        | RightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
+        | LeftOrRightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
+        member x.CypherExpr =
+            match x with
+            | LeftRel(lnode,rel,rnode) ->
+                sprintf "%s<-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
+            | RightRel(lnode,rel,rnode) ->
+                sprintf "%s-%s->%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
+            | LeftOrRightRel(lnode,rel,rnode) ->
+                sprintf "%s-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
+
+        member x.Create(cypher: ICypherFluentQuery) =
+            match x with
+            | LeftRel(lnode,rel,rnode)
+            | RightRel(lnode,rel,rnode) ->
+                let tryFold opt f arg =
+                    match opt with
+                    | Some value -> f arg value
+                    | None -> arg
+
+                let withParamFolder (cypher: ICypherFluentQuery) (paramName, value) =
+                    cypher.WithParam(paramName, value)
+
+                cypher.Create(x.CypherExpr)
+                |> tryFold lnode.Parameter withParamFolder
+                |> tryFold rnode.Parameter withParamFolder
+                |> tryFold rel.Parameter withParamFolder
+            | _ -> failwith (sprintf "Can create this type of pattern: %A" x)
+
     let inline (|IsPredefinedMethod|_|) name (methodInfo: MethodInfo) =
         if methodInfo.Name = name &&
            methodInfo.DeclaringType.Assembly = fsQuotationAssembly
         then Some ()
         else None
 
-    let inline (|CreateNodeCall|_|) (callExpr: Expr) =
-        match callExpr with
-        | SpecificCall <@ createNode @> (_, _, [node]) -> Some node
-        | _ -> None
-
-    let inline (|DeleteNodeCall|_|) (callExpr: Expr) =
-        match callExpr with
-        | SpecificCall <@ deleteNode @> (_, _, [node]) -> Some node
+    let inline (|IsNodeExpr|_|) expr: Option<NodeExpr> =
+        match expr with
+        | Var(var) -> Some (NodeExpr.Var(var))
+        | ValueWithName(value, typ, name) ->
+            // TODO denisok: extract constant
+            let paramName = sprintf "__neo4jnode__%s" name
+            let cypherExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
+            Some (NodeExpr.NamedValue(cypherExpr, paramName, value))
         | _ -> None
 
     let inline (|DeclareNodeCall|_|) (callExpr: Expr) =
@@ -78,6 +153,42 @@ module internal QuotationsHelpers =
     let inline (|DeclareRelationshipCall|_|) (callExpr: Expr) =
         match callExpr with
         | SpecificCall <@ declareRelationship @> (_, [relType], _) -> Some relType
+        | _ -> None
+
+    let inline (|IsRelExpr|_|) expr: Option<RelExpr> =
+        match expr with
+        | ValueWithName(value, typ, name) ->
+            // TODO denisok: extract constant
+            // TODO denisok: move cypherexpr logic generation to type
+            let paramName = sprintf "__neo4jrel__%s" name
+            let cypherExpr = sprintf "[%s:%s {%s}]" name typ.Name paramName
+            Some (RelExpr.NamedValue(cypherExpr, paramName, value))
+        | DeclareRelationshipCall typ ->
+            let cypherExpr = sprintf "[:%s]" typ.Name
+            Some (RelExpr.TypedPattern(cypherExpr))
+        | _ -> None
+
+    let inline (|CreateNodeCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ createNode @>
+            (_, _, [IsNodeExpr(NodeExpr.NamedValue _ as nodeExpr)]) ->
+            printfn "Create node: %A" nodeExpr
+            Some nodeExpr
+        | _ -> None
+
+    let inline (|CreateRelationCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ createLeftRelation @>
+            (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2))
+        | SpecificCall <@ createRightRelation @>
+            (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.RightRel(nodeExpr1, relExpr, nodeExpr2))
+        | _ -> None
+
+    let inline (|DeleteNodeCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ deleteNode @> (_, _, [node]) -> Some node
         | _ -> None
 
     let inline (|MatchNodeCall|_|) (callExpr: Expr) =
@@ -102,7 +213,7 @@ module internal QuotationsHelpers =
 
     let inline (|ReturnResultsCall|_|) (callExpr: Expr) =
         match callExpr with
-        | Call(None, IsPredefinedMethod "returnResults", [returnArg]) -> Some returnArg
+        | SpecificCall <@ returnResults @> (_,_,[returnArg]) -> Some returnArg
         | _ -> None
 
     let (|PropertyGetChain|_|) (expr: Expr) =
@@ -228,14 +339,8 @@ module QuotationInterpreter =
 
     let private executeCreate (cypher: ICypherFluentQuery) createExpr =
         match createExpr with
-        | CreateNodeCall(ValueWithName(value, typ, name)) ->
-             printfn "Create node: %s (type: %s - value: %A)" name typ.Name value
-             // TODO denisok: extract constant
-             let paramName = sprintf "__neo4jfsquot__%s" name
-             let createExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
-             cypher.Create(createExpr)
-                   .WithParam(paramName, value)
-
+        | CreateNodeCall nodeExpr -> nodeExpr.Create(cypher)
+        | CreateRelationCall patternExpr -> patternExpr.Create(cypher)
         | _ -> unsupportedScenario "Create node" createExpr
 
     let private executeDelete (cypher: ICypherFluentQuery) deleteExpr =
@@ -257,6 +362,7 @@ module QuotationInterpreter =
             match rest with
             | ReturnResultsCall(returnExpr) -> executeReturn cypher returnExpr
             | CreateNodeCall _ -> Choice1Of2 (executeCreate cypher rest)
+            | CreateRelationCall _ -> Choice1Of2 (executeCreate cypher rest)
             | DeleteNodeCall _ -> Choice1Of2 (executeDelete cypher rest)
             | _ -> unexpectedExpr "After 'where' expression" rest
         | _ -> unhandledExpr whereExpr
