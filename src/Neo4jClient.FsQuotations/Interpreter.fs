@@ -43,11 +43,14 @@ module CypherQueryGrammar =
     let matchRightRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
     let optionalMatchNode (_: #INeo4jNode) = ()
     let optionalMatchRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
-    let where (_boolExpr: bool) = ()
+
+    let where (_: bool) = ()
 
     let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
     let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let createUniqueRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let createUniqueLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let deleteNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
 
     let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
@@ -67,11 +70,11 @@ module internal QuotationsHelpers =
             | NamedValue(cypherExpr, _, _) -> cypherExpr
         member x.Parameter =
             match x with
-            | Var(var) -> None
+            | Var(_var) -> None
             | NamedValue(_, paramName, value) -> Some (paramName, value)
         member x.Create(cypher: ICypherFluentQuery) =
             match x with
-            | Var(var) -> cypher.Create(x.CypherExpr)
+            | Var(_var) -> cypher.Create(x.CypherExpr)
             | NamedValue(cypherExpr, paramName, value) ->
                 cypher.Create(cypherExpr).WithParam(paramName, value)
 
@@ -80,6 +83,7 @@ module internal QuotationsHelpers =
     type internal RelExpr =
         | NamedValue of cypherExpr:string * paramName:string * value:obj
         | TypedPattern of cypherExpr:string
+
         member x.CypherExpr =
             match x with
             | NamedValue(cypherExpr, _, _)
@@ -99,22 +103,22 @@ module internal QuotationsHelpers =
     [<RequireQualifiedAccess>]
     [<NoComparison>]
     type internal CypherPattern =
-        | LeftRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
-        | RightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
+        | LeftRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
+        | RightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
         | LeftOrRightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
         member x.CypherExpr =
             match x with
-            | LeftRel(lnode,rel,rnode) ->
+            | LeftRel(lnode,rel,rnode,_) ->
                 sprintf "%s<-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
-            | RightRel(lnode,rel,rnode) ->
+            | RightRel(lnode,rel,rnode,_) ->
                 sprintf "%s-%s->%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
             | LeftOrRightRel(lnode,rel,rnode) ->
                 sprintf "%s-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
 
         member x.Create(cypher: ICypherFluentQuery) =
             match x with
-            | LeftRel(lnode,rel,rnode)
-            | RightRel(lnode,rel,rnode) ->
+            | LeftRel(lnode,rel,rnode,isUnique)
+            | RightRel(lnode,rel,rnode,isUnique) ->
                 let tryFold opt f arg =
                     match opt with
                     | Some value -> f arg value
@@ -123,7 +127,10 @@ module internal QuotationsHelpers =
                 let withParamFolder (cypher: ICypherFluentQuery) (paramName, value) =
                     cypher.WithParam(paramName, value)
 
-                cypher.Create(x.CypherExpr)
+                if isUnique then
+                    cypher.CreateUnique(x.CypherExpr)
+                else
+                    cypher.Create(x.CypherExpr)
                 |> tryFold lnode.Parameter withParamFolder
                 |> tryFold rnode.Parameter withParamFolder
                 |> tryFold rel.Parameter withParamFolder
@@ -178,12 +185,18 @@ module internal QuotationsHelpers =
 
     let inline (|CreateRelationCall|_|) (callExpr: Expr) =
         match callExpr with
-        | SpecificCall <@ createLeftRelation @>
-            (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
-            Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2))
-        | SpecificCall <@ createRightRelation @>
-            (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
-            Some (CypherPattern.RightRel(nodeExpr1, relExpr, nodeExpr2))
+        | SpecificCall <@ createRightRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.RightRel(nodeExpr1, relExpr, nodeExpr2, isUnique=false))
+
+        | SpecificCall <@ createUniqueRightRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.RightRel(nodeExpr1, relExpr, nodeExpr2, isUnique=true))
+
+        | SpecificCall <@ createLeftRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2, isUnique=false))
+
+        | SpecificCall <@ createUniqueLeftRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2, isUnique=true))
+
         | _ -> None
 
     let inline (|DeleteNodeCall|_|) (callExpr: Expr) =

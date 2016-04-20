@@ -83,3 +83,33 @@ let ``Create and node + relation at the same time`` () =
         |> Seq.map (fun hh -> hh.Name)
 
     CollectionAssert.Contains(myHouseholdsNames, "Paris 10", "Household names")
+
+[<Test>]
+let ``Create unique relationship``() =
+    // Arrange
+    createNodeAndExecute neo4jClient { FacebookId = "Parisian" }
+
+    // Act
+    for _ in 1 .. 5 do
+        let uniqueHouse: HouseholdNode = { Name = "UniqueHouse" }
+        <@
+        let person = declareNode<UserNode>
+        matchNode person
+        where (person.FacebookId = "Parisian")
+        createUniqueRightRelation person declareRelationship<IsResidentOf> uniqueHouse
+        @>
+        |> executeWriteQuery neo4jClient.Cypher
+
+    // Assert
+    let nbOfHouses =
+        <@
+        let person = declareNode<UserNode>
+        let house = declareNode<HouseholdNode>
+        matchRightRelation person declareRelationship<IsResidentOf> house
+        where (person.FacebookId = "Parisian")
+        returnResults house
+        @>
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.length
+
+    Assert.AreEqual(1, nbOfHouses, "Number of houses")

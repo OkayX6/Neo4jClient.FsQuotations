@@ -49,7 +49,7 @@
     <Compile Include="Cypher.fs" />
     <Compile Include="Interpreter.fs" />
     <None Include="TestData.fsx" />
-    <None Include="Script.fsx" />
+    <None Include="DevPlayground.fsx" />
     <None Include="paket.references" />
     <None Include="paket.template" />
   </ItemGroup>

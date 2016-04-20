@@ -31,43 +31,32 @@ open FSharp.Quotations.DerivedPatterns
 open FSharp.Quotations.ExprShape
 open FSharp.Quotations.Patterns
 open FSharp.Linq.RuntimeHelpers
-open Neo4jClient.Cypher
 open System.Linq.Expressions
+open Neo4jClient.Cypher
 
-let getNodes() =
-    <@
-    let n = declareNode<UserNode>
-    matchNode n
-    where (n.FacebookId = "newNode")
-    returnResults n
-    @>
-    |> executeReadQuery client.Cypher
-    |> Seq.toArray
+<@
+let n = declareNode<UserNode>
+matchNode n
+returnResults n
+@>
+|> executeReadQuery client.Cypher
+|> Seq.toArray
 
 do
-    let u: UserNode = { FacebookId = "newNode" }
-
+    let newHousehold: HouseholdNode = { Name = "Maison à Bussy" }
     <@
-    createNode u
+    let invitee = declareNode<UserNode>
+    matchNode invitee
+    where (invitee.FacebookId = "12345")
+    createUniqueRightRelation invitee declareRelationship<IsResidentOf> newHousehold
     @>
     |> executeWriteQuery client.Cypher
 
-getNodes() // Before deletion
-
-do
-    <@
-    let u = declareNode<UserNode>
-    matchNode u
-    where (u.FacebookId = "newNode")
-    deleteNode u
-    @>
-    |> executeWriteQuery client.Cypher
-
-getNodes() // After deletion
-
-client.Cypher
-    .Match("(n: UserNode)")
-    .Where("n.FacebookId = 'newNode'")
-    .Delete("n")
-    .ExecuteWithoutResults
-
+<@
+let invitee = declareNode<UserNode>
+let hh = declareNode<HouseholdNode>
+matchRightRelation invitee declareRelationship<IsResidentOf> hh
+where (invitee.FacebookId = "12345")
+returnResults (invitee, hh)
+@>
+|> executeReadQuery client.Cypher
