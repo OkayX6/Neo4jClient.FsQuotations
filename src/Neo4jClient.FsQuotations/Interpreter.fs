@@ -51,7 +51,8 @@ module CypherQueryGrammar =
     let createLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createUniqueRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createUniqueLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
-    let deleteNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
+    let deleteNode (_: 'T when 'T :> INeo4jNode) = ()
+    let deleteRelationship (_: 'T when 'T :> INeo4jRelationship) = ()
 
     let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
 
@@ -202,6 +203,11 @@ module internal QuotationsHelpers =
     let inline (|DeleteNodeCall|_|) (callExpr: Expr) =
         match callExpr with
         | SpecificCall <@ deleteNode @> (_, _, [node]) -> Some node
+        | _ -> None
+
+    let inline (|DeleteRelationshipCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ deleteRelationship @> (_, _, [rel]) -> Some rel
         | _ -> None
 
     let inline (|MatchNodeCall|_|) (callExpr: Expr) =
@@ -359,36 +365,40 @@ module QuotationInterpreter =
     let private executeDelete (cypher: ICypherFluentQuery) deleteExpr =
         match deleteExpr with
         | DeleteNodeCall(Var(node)) ->
-             printfn "Delete node: %s (type: %s)" node.Name node.Type.Name
-             cypher.Delete(node.Name)
+            printfn "Delete node: %s (type: %s)" node.Name node.Type.Name
+            cypher.Delete(node.Name)
+        | DeleteRelationshipCall(Var(rel)) ->
+            printfn "Delete relationship: %s (type: %s)" rel.Name rel.Type.Name
+            cypher.Delete(rel.Name)
         | _ -> unsupportedScenario "Delete node" deleteExpr
 
     let private executeWhere<'T> (cypher: ICypherFluentQuery) (whereExpr: Expr): InterpreterResult<'T> =
-        match whereExpr with
-        | Sequential(WhereCall(BinaryExpr(op, arg1, arg2)), rest) ->
-            let formattedArg1 = getOperand arg1
-            let formattedArg2 = getOperand arg2
-            let whereExpr = sprintf "%s %s %s" formattedArg1 op formattedArg2
-            printfn "Where %s" whereExpr
-            let cypher = cypher.Where(whereExpr)
-
-            match rest with
+        let executeNextExpr context cypher next =
+            match next with
             | ReturnResultsCall(returnExpr) -> executeReturn cypher returnExpr
-            | CreateNodeCall _ -> Choice1Of2 (executeCreate cypher rest)
-            | CreateRelationCall _ -> Choice1Of2 (executeCreate cypher rest)
-            | DeleteNodeCall _ -> Choice1Of2 (executeDelete cypher rest)
-            | _ -> unexpectedExpr "After 'where' expression" rest
-        | _ -> unhandledExpr whereExpr
+            | CreateNodeCall _
+            | CreateRelationCall _ -> Choice1Of2 (executeCreate cypher next)
+            | DeleteNodeCall _
+            | DeleteRelationshipCall _ -> Choice1Of2 (executeDelete cypher next)
+            | _ -> unexpectedExpr context next
+        let context = "After WHERE expression"
+            
+        match whereExpr with
+        | Sequential(expr, next) ->
+            let cypher =
+                match expr with
+                | WhereCall(BinaryExpr(op, arg1, arg2)) ->
+                    let formattedArg1 = getOperand arg1
+                    let formattedArg2 = getOperand arg2
+                    let whereExpr = sprintf "%s %s %s" formattedArg1 op formattedArg2
+                    printfn "Where %s" whereExpr
+                    cypher.Where(whereExpr)
+                | _ -> cypher
+
+            executeNextExpr context cypher next
+        | _ -> executeNextExpr context cypher whereExpr
 
     let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): InterpreterResult<'T> =
-        let executeRest cypher (rest: Expr) =
-            match rest with
-            | Sequential((MatchNodeCall(_) | AnyMatchRelation(_)), _) -> executeMatch cypher rest
-            | Sequential(WhereCall _, _) -> executeWhere cypher rest
-            // TODO denisok: find a way to refactor execution branching with executeWhere
-            | ReturnResultsCall returnArg -> executeReturn cypher returnArg
-            | _ -> unhandledExpr rest
-
         let nodeCypherExpr (n: Expr) =
             match n with
             | Var v -> sprintf "(%O:%s)" v.Name v.Type.Name
@@ -399,7 +409,7 @@ module QuotationInterpreter =
         | Sequential(MatchNodeCall(nodeArg), rest) ->
             let matchExpr = nodeCypherExpr nodeArg
             printfn "MatchNode: %A (expr: %s)" nodeArg matchExpr
-            executeRest (cypher.Match(matchExpr)) rest
+            executeWhere (cypher.Match(matchExpr)) rest
 
         | Sequential(AnyMatchRelation(node1, rel, node2) as matchRel, rest) ->
             let relCypherExpr (r: Expr) =
@@ -420,7 +430,7 @@ module QuotationInterpreter =
 
             printfn "MatchRelation: %s" matchExpr
             let newCypher = cypher.Match(matchExpr)
-            executeRest newCypher rest
+            executeWhere newCypher rest
 
         | _ -> unhandledExpr q
 
