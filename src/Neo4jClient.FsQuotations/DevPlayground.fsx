@@ -35,28 +35,15 @@ open System.Linq.Expressions
 open Neo4jClient.Cypher
 
 <@
-let n = declareNode<UserNode>
-matchNode n
-returnResults n
+let isResidentRel = declareRelationship<IsResidentOf>
+matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
+returnResults isResidentRel
 @>
 |> executeReadQuery client.Cypher
-|> Seq.toArray
-
-do
-    let newHousehold: HouseholdNode = { Name = "Maison à Bussy" }
-    <@
-    let invitee = declareNode<UserNode>
-    matchNode invitee
-    where (invitee.FacebookId = "12345")
-    createUniqueRightRelation invitee declareRelationship<IsResidentOf> newHousehold
-    @>
-    |> executeWriteQuery client.Cypher
 
 <@
-let invitee = declareNode<UserNode>
-let hh = declareNode<HouseholdNode>
-matchRightRelation invitee declareRelationship<IsResidentOf> hh
-where (invitee.FacebookId = "12345")
-returnResults (invitee, hh)
+let isResidentRel = declareRelationship<IsResidentOf>
+matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
+deleteRelationship isResidentRel
 @>
-|> executeReadQuery client.Cypher
+|> executeWriteQuery client.Cypher

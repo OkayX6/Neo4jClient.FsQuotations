@@ -85,7 +85,7 @@ let ``Create and node + relation at the same time`` () =
     CollectionAssert.Contains(myHouseholdsNames, "Paris 10", "Household names")
 
 [<Test>]
-let ``Create unique relationship``() =
+let ``Create unique relationship`` () =
     // Arrange
     createNodeAndExecute neo4jClient { FacebookId = "Parisian" }
 
@@ -113,3 +113,42 @@ let ``Create unique relationship``() =
         |> Seq.length
 
     Assert.AreEqual(1, nbOfHouses, "Number of houses")
+
+[<Test>]
+let ``Delete relationship`` () =
+    // Arrange
+    createNodeAndExecute neo4jClient { Name = "Coloc de la joie" }
+
+    for name in [ "Denis" ; "TT" ; "Opwal" ] do
+        let user = { FacebookId = name }
+        <@
+        let hh = declareNode<HouseholdNode>
+        matchNode hh
+        where (hh.Name = "Coloc de la joie")
+        createUniqueRightRelation user declareRelationship<IsResidentOf> hh
+        @>
+        |> executeWriteQuery neo4jClient.Cypher
+
+    // Act
+    <@
+    let user = declareNode<UserNode>
+    let rel = declareRelationship<IsResidentOf>
+    matchRelation user rel declareNode<HouseholdNode>
+    where (user.FacebookId = "Denis")
+    deleteRelationship rel
+    @>
+    |> executeWriteQuery neo4jClient.Cypher
+
+    // Assert
+    let residentsOfColoc =
+        <@
+        let user = declareNode<UserNode>
+        let hh = declareNode<HouseholdNode>
+        matchRelation user declareRelationship<IsResidentOf> hh
+        where (hh.Name = "Coloc de la joie")
+        returnResults user
+        @>
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.map (fun user -> user.FacebookId)
+
+    CollectionAssert.AreEquivalent([ "Opwal" ; "TT" ], residentsOfColoc, "Residents of the household")
