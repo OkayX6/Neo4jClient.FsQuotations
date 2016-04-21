@@ -72,28 +72,6 @@ module Cypher =
             sprintf "%s:%s {%s:'%O'}" nodeName data.TypeInfo.Name keyName data.Key
         )
 
-    // TODO denisok: enforce INeo4jRelationship
-    let internal createNodeAndUniquelyRelateTo (sourceNode: NodeMatch<'TSourceKey>) (relationship: 'TRelationship) (targetNodeToCreate: 'TTargetNode) (query: ICypherFluentQuery) =
-        let sourceNodeMatchExpr' = tryGenerateMatchExpr sourceNode "sourceNode"
-        match sourceNodeMatchExpr' with
-        | Some sourceNodeMatchExpr ->
-            let relationshipArgName = "relationshipArg"
-            let targetNodeArgName = "targetNodeArg"
-
-            query.Match(sprintf "(%s)" sourceNodeMatchExpr)
-                 .CreateUnique(
-                    sprintf "(sourceNode)-[:%s {%s}]->(targetNodeToCreate:%s {%s})"
-                        typeof<'TRelationship>.Name
-                        relationshipArgName
-                        typeof<'TTargetNode>.Name
-                        targetNodeArgName)
-                 .WithParams(
-                    dict [
-                        relationshipArgName, box relationship
-                        targetNodeArgName, box targetNodeToCreate
-                    ])
-        | None -> raiseNeo4jNodeTypeException<'TTargetNode>()
-
     let internal deleteRelationship (sourceNode: NodeMatch<'TSourceKey>) (relationshipType: Type) (targetNode: NodeMatch<'TTargetKey>) (query: ICypherFluentQuery) =
         let sourceMatchExpr' = tryGenerateMatchExpr sourceNode "sourceNode"
         let targetMatchExpr' = tryGenerateMatchExpr targetNode "targetNode"
