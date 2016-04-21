@@ -33,13 +33,22 @@ client.Cypher.Match("n").DetachDelete("n").ExecuteWithoutResults()
 Declare nodes & relationships in your model (by inheriting from `INeo4jNode` or
 `INeo4jRelationship` interfaces).
 
-We will define users.
+Here we are defining users (`UserNode`), households (`HouseholdNode`) and
+the `IsResidentOf` relationship.
 *)
 
 [<CLIMutable>]
 type UserNode = 
     { FacebookId: string }
     interface INeo4jNode
+
+[<CLIMutable>]
+type HouseholdNode = 
+    { Name: string }
+    interface INeo4jNode
+
+type IsResidentOf() =
+    interface INeo4jRelationship
 
 (**
 ## Create user nodes
@@ -76,3 +85,33 @@ let userTT =
 
 (** ### Results *)
 (*** include-value: userTT ***)
+
+(**
+## Create node and relate to it
+
+Create a `HouseholdNode`, mention that `UserNode` _Opwal_ has a `IsResidentOf` relationship with it.
+*)
+do
+    let newHousehold: HouseholdNode = { Name = "Paris 10" }
+    <@
+        let user = declareNode<UserNode>
+        matchNode user
+        where (user.FacebookId = "Opwal")
+        createRightRelation user declareRelationship<IsResidentOf> newHousehold
+    @>
+    |> executeWriteQuery client.Cypher
+
+(** List all households where `UserNode` _Opwal_ resides: *)
+let opwalHouseholds =
+    <@
+    let user = declareNode<UserNode>
+    let household = declareNode<HouseholdNode>
+    matchRightRelation user declareRelationship<IsResidentOf> household
+    where (user.FacebookId = "Opwal")
+    returnResults household
+    @>
+    |> executeReadQuery client.Cypher
+    |> Seq.toList
+
+(** ### Results *)
+(*** include-value:opwalHouseholds ***)

@@ -23,7 +23,7 @@ Documentation
 Example
 -------
 
-This example demonstrates using a function defined in this sample library.
+This example demonstrates basic usage of the Neo4jClient.FsQuotations library.
 
 *)
 #r "Neo4jClient.dll"
