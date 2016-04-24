@@ -30,7 +30,7 @@ let ``Get all nodes with specific label`` () =
         "Get all user nodes")
 
 [<Test>]
-let ``Get nodes with basic WHERE clause`` () =
+let ``Get nodes with simple WHERE clause`` () =
     let query =
         <@
         let u = declareNode<UserNode>
@@ -47,6 +47,26 @@ let ``Get nodes with basic WHERE clause`` () =
 
     Assert.AreEqual(1, results.Length, "Number of results")
     Assert.AreEqual("Denis", results.[0], "Facebook ID")
+
+[<Test>]
+let ``Get nodes with complex WHERE clause`` () =
+    let query =
+        <@
+        let u = declareNode<UserNode>
+        matchNode u
+        where (u.FacebookId = "Denis" || u.FacebookId = "TT")
+        returnResults u
+        @>
+
+    let results =
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.map (fun user -> user.FacebookId)
+        |> Seq.sort
+        |> Seq.toArray
+
+    Assert.AreEqual(2, results.Length, "Number of results")
+    CollectionAssert.AreEqual([ "Denis"; "TT" ], results, "Facebook ID")
 
 [<Test>]
 let ``Get pairs of nodes having specific relationship`` () =

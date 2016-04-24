@@ -44,7 +44,8 @@ module CypherQueryGrammar =
     let optionalMatchNode (_: #INeo4jNode) = ()
     let optionalMatchRelation (_: #INeo4jNode) (_: #INeo4jRelationship) (_: #INeo4jNode) = ()
 
-    let where (_: bool) = ()
+    let where (_:bool) = ()
+    let isNotNull (_:bool) = false
 
     let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
     let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
@@ -62,7 +63,7 @@ module internal QuotationsHelpers =
 
     [<RequireQualifiedAccess>]
     [<NoComparison>]
-    type internal NodeExpr =
+    type NodeExpr =
         | Var of var:Var
         | NamedValue of cypherExpr:string * paramName:string * value:obj
         member x.CypherExpr =
@@ -81,7 +82,7 @@ module internal QuotationsHelpers =
 
     [<RequireQualifiedAccess>]
     [<NoComparison>]
-    type internal RelExpr =
+    type RelExpr =
         | NamedValue of cypherExpr:string * paramName:string * value:obj
         | TypedPattern of cypherExpr:string
 
@@ -103,7 +104,7 @@ module internal QuotationsHelpers =
 
     [<RequireQualifiedAccess>]
     [<NoComparison>]
-    type internal CypherPattern =
+    type CypherPattern =
         | LeftRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
         | RightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
         | LeftOrRightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
@@ -248,15 +249,86 @@ module internal QuotationsHelpers =
         impl expr
         |> Option.map (fun (entity, propChain) -> entity, List.rev propChain)
 
-    let (|BinaryExpr|_|) (expr: Expr) =
+    let (|IsOperand|_|) (expr: Expr) =
+        match expr with
+        | PropertyGetChain(entity, propChain) ->
+            [|
+                yield entity.Name
+                yield! propChain
+            |]
+            |> fun strings -> Some (String.Join(".", strings))
+        | Value(value, _typ) ->
+            match value with
+            | :? string -> Some (sprintf "\"%O\"" value)
+            | :? int | :? bool | :? float
+                // TODO denisok: more types to support
+                -> Some (string value)
+            | _ -> None
+        | _ -> None
+
+    [<RequireQualifiedAccess; NoComparison>]
+    type PredicateExpr =
+        | PrefixUnary of op:string * expr:string
+        | PostfixUnary of op:string * expr:string
+        | BinaryComp of op:string * left:string * right:string
+        | And of left:PredicateExpr * right:PredicateExpr
+        | Or of left:PredicateExpr * right:PredicateExpr
+        | Not of expr:PredicateExpr
+        member x.CypherExpr =
+            match x with
+            | BinaryComp(op, left, right) -> sprintf "%O %s %O" left op right
+            | And(left, right) -> sprintf "(%s) AND (%s)" left.CypherExpr right.CypherExpr
+            | Or(left, right) -> sprintf "(%s) OR (%s)" left.CypherExpr right.CypherExpr
+            | Not e -> sprintf "NOT (%s)" e.CypherExpr
+            | PrefixUnary(op, expr) -> sprintf "%s %O" op expr
+            | PostfixUnary(op, expr) -> sprintf "%O %s" expr op
+
+    let (|IsUnaryExpr|_|) (expr: Expr) =
+        match expr with
+        | SpecificCall <@ isNull @> (_, _, [IsOperand(arg)]) -> Some (PredicateExpr.PostfixUnary("IS NULL", arg))
+        | SpecificCall <@ isNotNull @> (_, _, [IsOperand(arg)]) -> Some (PredicateExpr.PostfixUnary("IS NOT NULL", arg))
+        | _ -> None
+
+    let (|IsBinaryExpr|_|) (expr: Expr) =
         match expr with
         // NOTE: refactoring the pattern matches lead to exponential type inference/compile time
-        | SpecificCall <@ (=) @> (_, _, [arg1; arg2]) -> Some ("=", arg1, arg2)
-        | SpecificCall <@ (<>) @> (_, _, [arg1; arg2]) -> Some ("<>", arg1, arg2)
-        | SpecificCall <@ (<) @> (_, _, [arg1; arg2]) -> Some ("<", arg1, arg2)
-        | SpecificCall <@ (>) @> (_, _, [arg1; arg2]) -> Some (">", arg1, arg2)
-        | SpecificCall <@ (<=) @> (_, _, [arg1; arg2]) -> Some ("<=", arg1, arg2)
-        | SpecificCall <@ (>=) @> (_, _, [arg1; arg2]) -> Some (">=", arg1, arg2)
+        | SpecificCall <@ (=) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp("=", arg1, arg2))
+        | SpecificCall <@ (<>) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp("<>", arg1, arg2))
+        | SpecificCall <@ (<) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp("<", arg1, arg2))
+        | SpecificCall <@ (>) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp(">", arg1, arg2))
+        | SpecificCall <@ (<=) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp("<=", arg1, arg2))
+        | SpecificCall <@ (>=) @> (_, _, [IsOperand(arg1); IsOperand(arg2)]) -> Some (PredicateExpr.BinaryComp(">=", arg1, arg2))
+        | _ -> None
+
+    let (|IsNegationExpr|_|) (expr: Expr) =
+        match expr with
+        | SpecificCall <@ not @> (_, _, [arg]) -> Some arg
+        | _ -> None
+
+    let rec tryParsePredicate (expr: Expr) =
+        match expr with
+        | IsBinaryExpr pred -> Some pred
+        // NOT (expr)
+        | IsNegationExpr expr ->
+            tryParsePredicate expr
+            |> Option.map (fun pred -> PredicateExpr.Not(pred))
+        // It is an AND
+        | IfThenElse(ifExpr, thenExpr, Value(:? bool as v, _)) when v = false ->
+            tryParsePredicate ifExpr
+            |> Option.bind (fun left ->
+                tryParsePredicate thenExpr
+                |> Option.bind (fun right ->
+                    Some <| PredicateExpr.And(left, right)))
+
+        // It is an OR
+        | IfThenElse(ifExpr, Value(:? bool as v, _), elseExpr) when v = true ->
+            tryParsePredicate ifExpr
+            |> Option.bind (fun left ->
+                tryParsePredicate elseExpr
+                |> Option.bind (fun right ->
+                    Some <| PredicateExpr.Or(left, right)))
+
+        | IsUnaryExpr pred -> Some pred
         | _ -> None
 
 [<AutoOpen>]
@@ -269,23 +341,6 @@ module QuotationInterpreter =
         raise <| NotImplementedException(exnMsg)
     let private unexpectedExpr (context: string) (expr: Expr) =
         failwith (sprintf "[Context: %s] Unexpected expression: %A" context expr)
-
-    let private getOperand (expr: Expr) =
-        match expr with
-        | PropertyGetChain(entity, propChain) ->
-            [|
-                yield entity.Name
-                yield! propChain
-            |]
-            |> fun strings -> String.Join(".", strings)
-        | Value(value, _typ) ->
-            match value with
-            | :? string -> sprintf "\"%O\"" value
-            // TODO denisok: more types to support
-            | :? int | :? bool
-            | :? float -> string value
-            | _ -> unexpectedExpr "Get operand value" expr
-        | _ -> unexpectedExpr "Get operand" expr
 
     // Count arguments
     // Generate lambda body
@@ -387,12 +442,13 @@ module QuotationInterpreter =
         | Sequential(expr, next) ->
             let cypher =
                 match expr with
-                | WhereCall(BinaryExpr(op, arg1, arg2)) ->
-                    let formattedArg1 = getOperand arg1
-                    let formattedArg2 = getOperand arg2
-                    let whereExpr = sprintf "%s %s %s" formattedArg1 op formattedArg2
-                    printfn "Where %s" whereExpr
-                    cypher.Where(whereExpr)
+                | WhereCall(predOpt) ->
+                    match tryParsePredicate predOpt with
+                    | Some pred -> 
+                        let whereExpr = pred.CypherExpr
+                        printfn "Where: %s" whereExpr
+                        cypher.Where(whereExpr)
+                    | None -> unexpectedExpr "WHERE predicate" expr
                 | _ -> cypher
 
             executeNextExpr context cypher next
