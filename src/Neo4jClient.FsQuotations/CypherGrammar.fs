@@ -11,9 +11,7 @@
 ///
 [<AutoOpen>]
 module CypherGrammar =
-    type CypherResult<'T> =
-        internal
-        | CypherResult
+    type CypherResult<'T> = internal | CypherResult
 
     /// Declares a node of a specific type
     ///
@@ -43,10 +41,12 @@ module CypherGrammar =
     let isNotNull (_:bool) = false
 
     let createNode (_: 'TNode when 'TNode :> INeo4jNode) = ()
-    let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
-    let createUniqueRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createUniqueLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let createUniqueRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let mergeLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let mergeRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let deleteNode (_: 'T when 'T :> INeo4jNode) = ()
     let deleteRelationship (_: 'T when 'T :> INeo4jRelationship) = ()
 
