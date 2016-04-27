@@ -2,6 +2,8 @@
 
 #load "StringUtils.fs"
       "Cypher.fs"
+      "TypeAnnotations.fs"
+      "CypherGrammar.fs"
       "Interpreter.fs"
 
 open System
@@ -30,10 +32,10 @@ type HouseholdNode =
 
 // prepare data for tests
 let initTestData (client: GraphClient) =
-    let userDenis = { FacebookId = "12345" }
-    let userTT = { FacebookId = "45678" }
-    let userOpwal = { FacebookId = "67890" }
-    let userChou2 = { FacebookId = "FbChouchou" }
+    let userDenis = { FacebookId = "Denis" }
+    let userTT = { FacebookId = "TT" }
+    let userOpwal = { FacebookId = "Opwal" }
+    let userChou2 = { FacebookId = "Chouchou" }
 
     let householdColocJoie = { Name = "Coloc de la Joie" }
     let householdColoCarrouf = { Name = "Colocarouf" }
@@ -84,4 +86,3 @@ let initTestData (client: GraphClient) =
     createRightRelationship userTT { IsResidentOf.CustomHouseholdName = "" } householdColocJoie
     createRightRelationship userOpwal { IsResidentOf.CustomHouseholdName = "Répupu" } householdColocJoie
     createRightRelationship userDenis { IsGuestOf.CustomHouseholdName = "Chez Barbie" } householdColoCarrouf
-
