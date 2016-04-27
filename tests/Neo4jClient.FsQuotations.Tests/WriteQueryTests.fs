@@ -7,6 +7,7 @@ open Neo4jClient.FsQuotations
 
 [<SetUp>]
 let setupDbWithTestData () =
+    // TODO denisok: simplify when detach delete is implemented
     clearAllRelations neo4jClient
     clearAllNodes neo4jClient
 
@@ -152,3 +153,57 @@ let ``Delete relationship`` () =
         |> Seq.map (fun user -> user.FacebookId)
 
     CollectionAssert.AreEquivalent([ "Opwal" ; "TT" ], residentsOfColoc, "Residents of the household")
+
+[<Test>]
+let ``Merge left/right relationship`` () =
+    // Scenarios
+    let queries = 
+        let rel: IsResidentOf = { CustomHouseholdName = "République" }
+        [
+            "RIGHT relationship",
+            <@
+            let denis = declareNode<UserNode>
+            let house = declareNode<HouseholdNode>
+            matchNode denis
+            matchNode house
+            where (denis.FacebookId = "Denis" && house.Name = "Coloc de la Joie")
+            mergeRightRelation denis rel house
+            @>
+
+            "LEFT relationship",
+            <@
+            let denis = declareNode<UserNode>
+            let house = declareNode<HouseholdNode>
+            matchNode denis
+            matchNode house
+            where (denis.FacebookId = "Denis" && house.Name = "Coloc de la Joie")
+            mergeLeftRelation house rel denis
+            @>
+        ]
+
+    for (scenario, query) in queries do
+        // Arrange
+        createNodeAndExecute neo4jClient ({ FacebookId = "Denis" }: UserNode)
+        createNodeAndExecute neo4jClient ({ Name = "Coloc de la Joie" }: HouseholdNode)
+
+        // Act
+        for _ in 1 .. 2 do
+            query |> executeWriteQuery neo4jClient.Cypher
+        
+        // Assert
+        let relations =
+            <@
+            let denis = declareNode<UserNode>
+            let house = declareNode<HouseholdNode>
+            let rel = declareRelationship<IsResidentOf>
+            matchRelation denis rel house
+            where (denis.FacebookId = "Denis" && house.Name = "Coloc de la Joie")
+            returnResults rel
+            @>
+            |> executeReadQuery neo4jClient.Cypher
+            |> Seq.toArray
+
+        Assert.AreEqual(1, relations.Length, sprintf "[Scenario: %s] Number of relationships" scenario)
+
+        clearAllRelations neo4jClient
+        clearAllNodes neo4jClient
