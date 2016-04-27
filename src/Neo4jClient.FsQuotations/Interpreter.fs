@@ -38,23 +38,32 @@ module internal QuotationsHelpers =
     [<RequireQualifiedAccess>]
     [<NoComparison>]
     type RelExpr =
-        | NamedValue of cypherExpr:string * paramName:string * value:obj
+        | NamedValue of name:string * typ:Type * value:obj
         | TypedPattern of cypherExpr:string
+
+        static member GenParamName name = sprintf "__neo4jrel__%s" name
 
         member x.CypherExpr =
             match x with
-            | NamedValue(cypherExpr, _, _)
+            | NamedValue(name, typ, value) ->
+                sprintf "[%s:%s {%s}]" name typ.Name (RelExpr.GenParamName name)
+            | TypedPattern(cypherExpr) -> cypherExpr
+
+        member x.UnparameterizedCypherExpr =
+            match x with
+            | NamedValue(name,typ,_) -> sprintf "[%s:%s]" name typ.Name
             | TypedPattern(cypherExpr) -> cypherExpr
 
         member x.Parameter =
             match x with
-            | NamedValue(_, paramName, value) -> Some (paramName, value)
+            | NamedValue(name, typ, value) -> Some (RelExpr.GenParamName name, value)
             | TypedPattern _ -> None
 
         member x.Create(cypher: ICypherFluentQuery) =
             match x with
-            | NamedValue(cypherExpr, paramName, value) ->
-                cypher.Create(cypherExpr).WithParam(paramName, value)
+            | NamedValue(name, typ, value) ->
+                let paramName = RelExpr.GenParamName name
+                cypher.Create(x.CypherExpr).WithParam(paramName, value)
             | TypedPattern(cypherExpr) -> cypher.Create(cypherExpr)
 
     [<RequireQualifiedAccess>]
@@ -63,7 +72,7 @@ module internal QuotationsHelpers =
         | LeftRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
         | RightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr * isUnique:bool
         | LeftOrRightRel of leftNode:NodeExpr * rel:RelExpr * rightNode:NodeExpr
-        member x.CypherExpr =
+        member x.CypherExprForCreate =
             match x with
             | LeftRel(lnode,rel,rnode,_) ->
                 sprintf "%s<-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
@@ -71,6 +80,14 @@ module internal QuotationsHelpers =
                 sprintf "%s-%s->%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
             | LeftOrRightRel(lnode,rel,rnode) ->
                 sprintf "%s-%s-%s" lnode.CypherExpr rel.CypherExpr rnode.CypherExpr
+
+        member x.CypherExprForMerge =
+            match x with
+            | LeftRel((NodeExpr.Var(_) as lnode), RelExpr.NamedValue(relName, relType, _), (NodeExpr.Var(_) as rnode),_) ->
+                sprintf "%s<-[%s:%s]-%s" lnode.CypherExpr relName relType.Name rnode.CypherExpr
+            | RightRel((NodeExpr.Var(_) as lnode), RelExpr.NamedValue(relName, relType, _), (NodeExpr.Var(_) as rnode),_) ->
+                sprintf "%s-[%s:%s]->%s" lnode.CypherExpr relName relType.Name rnode.CypherExpr
+            | _ -> failwith (sprintf "Invalid MERGE expression: %A" x)
 
         member x.Create(cypher: ICypherFluentQuery) =
             match x with
@@ -85,13 +102,24 @@ module internal QuotationsHelpers =
                     cypher.WithParam(paramName, value)
 
                 if isUnique then
-                    cypher.CreateUnique(x.CypherExpr)
+                    cypher.CreateUnique(x.CypherExprForCreate)
                 else
-                    cypher.Create(x.CypherExpr)
+                    cypher.Create(x.CypherExprForCreate)
                 |> tryFold lnode.Parameter withParamFolder
                 |> tryFold rnode.Parameter withParamFolder
                 |> tryFold rel.Parameter withParamFolder
             | _ -> failwith (sprintf "Can create this type of pattern: %A" x)
+
+        member x.Merge(cypher: ICypherFluentQuery) =
+            match x with
+            | LeftRel(_, RelExpr.NamedValue(relName, _, relValue), _, _)
+            | RightRel(_, RelExpr.NamedValue(relName, _, relValue), _, _) ->
+                let paramName = RelExpr.GenParamName relName
+                cypher.Merge(x.CypherExprForMerge)
+                      .OnCreate()
+                      .Set(sprintf "%s = {%s}" relName paramName)
+                      .WithParam(paramName, relValue)
+            | _ -> failwith (sprintf "Can MERGE this type of pattern: %A" x)
 
     let inline (|IsPredefinedMethod|_|) name (methodInfo: MethodInfo) =
         if methodInfo.Name = name &&
@@ -121,12 +149,7 @@ module internal QuotationsHelpers =
 
     let inline (|IsRelExpr|_|) expr: Option<RelExpr> =
         match expr with
-        | ValueWithName(value, typ, name) ->
-            // TODO denisok: extract constant
-            // TODO denisok: move cypherexpr logic generation to type
-            let paramName = sprintf "__neo4jrel__%s" name
-            let cypherExpr = sprintf "[%s:%s {%s}]" name typ.Name paramName
-            Some (RelExpr.NamedValue(cypherExpr, paramName, value))
+        | ValueWithName(value, typ, name) -> Some (RelExpr.NamedValue(name, typ, value))
         | DeclareRelationshipCall typ ->
             let cypherExpr = sprintf "[:%s]" typ.Name
             Some (RelExpr.TypedPattern(cypherExpr))
@@ -154,6 +177,14 @@ module internal QuotationsHelpers =
         | SpecificCall <@ createUniqueLeftRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
             Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2, isUnique=true))
 
+        | _ -> None
+
+    let inline (|MergeRelationCall|_|) expr =
+        match expr with
+        | SpecificCall <@ mergeRightRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.RightRel(nodeExpr1, relExpr, nodeExpr2, isUnique=false))
+        | SpecificCall <@ mergeLeftRelation @> (_, _, [IsNodeExpr(nodeExpr1); IsRelExpr(relExpr); IsNodeExpr(nodeExpr2)]) ->
+            Some (CypherPattern.LeftRel(nodeExpr1, relExpr, nodeExpr2, isUnique=false))
         | _ -> None
 
     let inline (|DeleteNodeCall|_|) (callExpr: Expr) =
@@ -380,7 +411,12 @@ module QuotationInterpreter =
         | DeleteRelationshipCall(Var(rel)) ->
             printfn "Delete relationship: %s (type: %s)" rel.Name rel.Type.Name
             cypher.Delete(rel.Name)
-        | _ -> unsupportedScenario "Delete node" deleteExpr
+        | _ -> unexpectedExpr "DELETE expression" deleteExpr
+
+    let private executeMerge (cypher: ICypherFluentQuery) mergeExpr =
+        match mergeExpr with
+        | MergeRelationCall patternExpr -> patternExpr.Merge(cypher)
+        | _ -> unsupportedScenario "MERGE expression" mergeExpr
 
     let private executeWhere<'T> (cypher: ICypherFluentQuery) (whereExpr: Expr): InterpreterResult<'T> =
         let executeNextExpr context cypher next =
@@ -390,6 +426,7 @@ module QuotationInterpreter =
             | CreateRelationCall _ -> Choice1Of2 (executeCreate cypher next)
             | DeleteNodeCall _
             | DeleteRelationshipCall _ -> Choice1Of2 (executeDelete cypher next)
+            | MergeRelationCall _ -> Choice1Of2 (executeMerge cypher next)
             | _ -> unexpectedExpr context next
         let context = "After WHERE expression"
             
