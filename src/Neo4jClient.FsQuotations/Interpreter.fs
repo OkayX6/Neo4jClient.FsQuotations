@@ -407,7 +407,7 @@ module QuotationInterpreter =
                 | _ -> cypher
 
             executeNextExpr context cypher next
-        | _ -> executeNextExpr context cypher whereExpr
+        | _ -> executeNextExpr "Not a WHERE expression" cypher whereExpr
 
     let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): InterpreterResult<'T> =
         let nodeCypherExpr (n: Expr) =
@@ -420,7 +420,7 @@ module QuotationInterpreter =
         | Sequential(MatchNodeCall(nodeArg), rest) ->
             let matchExpr = nodeCypherExpr nodeArg
             printfn "MatchNode: %A (expr: %s)" nodeArg matchExpr
-            executeWhere (cypher.Match(matchExpr)) rest
+            executeMatch (cypher.Match(matchExpr)) rest
 
         | Sequential(AnyMatchRelation(node1, rel, node2) as matchRel, rest) ->
             let relCypherExpr (r: Expr) =
@@ -441,8 +441,9 @@ module QuotationInterpreter =
 
             printfn "MatchRelation: %s" matchExpr
             let newCypher = cypher.Match(matchExpr)
-            executeWhere newCypher rest
+            executeMatch newCypher rest
 
+        | Sequential(WhereCall(_), _) -> executeWhere cypher q
         | _ -> unhandledExpr q
 
     let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<CypherResult<'T>>): seq<'T> =
