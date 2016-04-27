@@ -16,7 +16,7 @@ type internal NodeMatch<'TKey> =
           TypeInfo = typeof<'T> }
 
 [<RequireQualifiedAccess>]
-module Cypher =
+module internal Cypher =
     let inline raiseNeo4jNodeTypeExceptionFromType (typeinfo: Type) =
         raise (ArgumentException(sprintf "The '%s' type must define a property with 'Neo4jKeyAttribute'" typeinfo.FullName))
 

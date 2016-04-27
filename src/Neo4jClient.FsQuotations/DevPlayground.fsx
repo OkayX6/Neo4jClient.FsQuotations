@@ -34,16 +34,32 @@ open FSharp.Linq.RuntimeHelpers
 open System.Linq.Expressions
 open Neo4jClient.Cypher
 
+//<@
+//where ((1 = 2 || 1 = 3) && 1 = 3)
+//where (1 = 2 || 1 = 2 || 1 = 3)
+//where (1 = 2 && 1 = 2 && 1 = 3)
+//where (1 = 2 && 1 = 3)
+//where (1 = 2)
+//@>
+
 <@
-let isResidentRel = declareRelationship<IsResidentOf>
-matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
-returnResults isResidentRel
+let u = declareNode<UserNode>
+matchNode u
+where (u.FacebookId > "12344" && u.FacebookId >= "12346")
+returnResults u
 @>
 |> executeReadQuery client.Cypher
 
-<@
-let isResidentRel = declareRelationship<IsResidentOf>
-matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
-deleteRelationship isResidentRel
-@>
-|> executeWriteQuery client.Cypher
+//<@
+//let isResidentRel = declareRelationship<IsResidentOf>
+//matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
+//returnResults isResidentRel
+//@>
+//|> executeReadQuery client.Cypher
+//
+//<@
+//let isResidentRel = declareRelationship<IsResidentOf>
+//matchRightRelation declareNode<UserNode> isResidentRel declareNode<HouseholdNode>
+//deleteRelationship isResidentRel
+//@>
+//|> executeWriteQuery client.Cypher
