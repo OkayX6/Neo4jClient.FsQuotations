@@ -446,7 +446,7 @@ module QuotationInterpreter =
             executeNextExpr context cypher next
         | _ -> executeNextExpr "Not a WHERE expression" cypher whereExpr
 
-    let rec private executeMatch<'T> (cypher: ICypherFluentQuery) (q: Expr): InterpreterResult<'T> =
+    let rec private executeMatch<'T> isFirstCall (cypher: ICypherFluentQuery) (q: Expr): InterpreterResult<'T> =
         let nodeCypherExpr (n: Expr) =
             match n with
             | Var v -> sprintf "(%O:%s)" v.Name v.Type.Name
@@ -457,7 +457,7 @@ module QuotationInterpreter =
         | Sequential(MatchNodeCall(nodeArg), rest) ->
             let matchExpr = nodeCypherExpr nodeArg
             printfn "MatchNode: %A (expr: %s)" nodeArg matchExpr
-            executeMatch (cypher.Match(matchExpr)) rest
+            executeMatch false (cypher.Match(matchExpr)) rest
 
         | Sequential(AnyMatchRelation(node1, rel, node2) as matchRel, rest) ->
             let relCypherExpr (r: Expr) =
@@ -478,9 +478,9 @@ module QuotationInterpreter =
 
             printfn "MatchRelation: %s" matchExpr
             let newCypher = cypher.Match(matchExpr)
-            executeMatch newCypher rest
+            executeMatch false newCypher rest
 
-        | Sequential(WhereCall(_), _) -> executeWhere cypher q
+        | _ when not isFirstCall -> executeWhere cypher q
         | _ -> unhandledExpr q
 
     let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<CypherResult<'T>>): seq<'T> =
@@ -495,7 +495,7 @@ module QuotationInterpreter =
                     printfn "Declare relationship: %s (type: %s)" var.Name typ.Name
                     impl cypher rest
                 | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
-            | _ -> executeMatch cypher query
+            | _ -> executeMatch true cypher query
 
         match impl cypher query with
         | Choice1Of2 _ -> failwith "Unexpected interpreter result"
@@ -522,7 +522,7 @@ module QuotationInterpreter =
                 | _ -> failwith "Only calls to 'declareNode' or 'declareRelationship' are allowed in a 'let' construct"
 
             // Could be a match query
-            | _ -> executeMatch cypher query
+            | _ -> executeMatch true cypher query
 
         match impl cypher query with
         | Choice1Of2 cypher -> cypher.ExecuteWithoutResults()
