@@ -445,7 +445,7 @@ module QuotationInterpreter =
 
         | _ -> unhandledExpr q
 
-    let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<'T>): seq<'T> =
+    let executeReadQuery (cypher: ICypherFluentQuery) (query: Expr<CypherResult<'T>>): seq<'T> =
         let rec impl cypher (query: Expr) =
             match query with
             | Let(var, expr, rest) ->

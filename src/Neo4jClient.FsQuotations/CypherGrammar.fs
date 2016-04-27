@@ -1,19 +1,30 @@
 ﻿namespace Neo4jClient.FsQuotations
 
-/// Documentation for my library
+/// This module expose the grammar to write a Cypher queries in quotations.
 ///
 /// ## Example
 ///
-///     let h = Library.hello 1
-///     printfn "%d" h
+///     <@
+///     let n = declareNode<MyNode>
+///     returnResults n
+///     @>
 ///
 [<AutoOpen>]
-module CypherGrammar = 
-    /// Declares a node with a specific type
+module CypherGrammar =
+    type CypherResult<'T> =
+        internal
+        | CypherResult
+
+    /// Declares a node of a specific type
     ///
     /// ## Type parameters
     ///  - `'T` - the type of the node
     let declareNode<'T when 'T :> INeo4jNode> = Unchecked.defaultof<'T>
+
+    /// Declares a relationship of a specific type
+    ///
+    /// ## Type parameters
+    ///  - `'T` - the type of the relationship
     let declareRelationship<'T when 'T :> INeo4jRelationship> = Unchecked.defaultof<'T>
 
     /// Matches a node with a specific type like: "MATCH (n: 'T)"
@@ -39,4 +50,4 @@ module CypherGrammar =
     let deleteNode (_: 'T when 'T :> INeo4jNode) = ()
     let deleteRelationship (_: 'T when 'T :> INeo4jRelationship) = ()
 
-    let returnResults (_: 'T): 'T = Unchecked.defaultof<'T>
+    let returnResults (_: 'T): CypherResult<'T> = CypherResult
