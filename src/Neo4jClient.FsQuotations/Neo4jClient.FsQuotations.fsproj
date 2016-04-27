@@ -47,6 +47,8 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="StringUtils.fs" />
     <Compile Include="Cypher.fs" />
+    <Compile Include="TypeAnnotations.fs" />
+    <Compile Include="CypherGrammar.fs" />
     <Compile Include="Interpreter.fs" />
     <None Include="TestData.fsx" />
     <None Include="DevPlayground.fsx" />
