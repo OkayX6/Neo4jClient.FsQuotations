@@ -30,6 +30,24 @@ let ``Get all nodes with specific label`` () =
         "Get all user nodes")
 
 [<Test>]
+let ``Successive match clauses`` () =
+    let query =
+        <@
+        let user = declareNode<UserNode>
+        let house = declareNode<HouseholdNode>
+        matchNode user
+        matchNode house
+        where (user.FacebookId = "Denis")
+        returnResults (user, house)
+        @>
+    
+    Assert.DoesNotThrow(fun () ->
+        query
+        |> executeReadQuery neo4jClient.Cypher
+        |> ignore
+    )
+
+[<Test>]
 let ``Get nodes with simple WHERE clause`` () =
     let query =
         <@
