@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="TestDomainModels.fs" />
     <Compile Include="TestContext.fs" />
+    <Compile Include="GrammarTests.fs" />
     <Compile Include="ReadQueryTests.fs" />
     <Compile Include="WriteQueryTests.fs" />
     <None Include="paket.references" />
