@@ -29,6 +29,11 @@ module internal QuotationsHelpers =
         | Var of var:Var
         | NamedValue of cypherExpr:string * paramName:string * value:obj
         | Anonymous of typ:Type
+        member x.CypherExprForCreate =
+            match x with
+            | Var(var) -> sprintf "(%s)" var.Name
+            | NamedValue(cypherExpr, _, _) -> cypherExpr
+            | Anonymous(typ) -> sprintf "(:%s)" typ.Name
         member x.CypherExpr =
             match x with
             | Var(var) -> sprintf "(%s:%s)" var.Name var.Type.Name
@@ -91,11 +96,11 @@ module internal QuotationsHelpers =
         member x.CypherExprForCreate =
             match x with
             | LeftRel(lnode,rel,rnode,_) ->
-                sprintf "%s<-%s-%s" lnode.CypherExpr rel.CypherExprForCreate rnode.CypherExpr
+                sprintf "%s<-%s-%s" lnode.CypherExprForCreate rel.CypherExprForCreate rnode.CypherExprForCreate
             | RightRel(lnode,rel,rnode,_) ->
-                sprintf "%s-%s->%s" lnode.CypherExpr rel.CypherExprForCreate rnode.CypherExpr
+                sprintf "%s-%s->%s" lnode.CypherExprForCreate rel.CypherExprForCreate rnode.CypherExprForCreate
             | LeftOrRightRel(lnode,rel,rnode) ->
-                sprintf "%s-%s-%s" lnode.CypherExpr rel.CypherExprForCreate rnode.CypherExpr
+                sprintf "%s-%s-%s" lnode.CypherExprForCreate rel.CypherExprForCreate rnode.CypherExprForCreate
 
         member x.CypherExpr =
             match x with
@@ -117,6 +122,8 @@ module internal QuotationsHelpers =
 
                 let withParamFolder (cypher: ICypherFluentQuery) (paramName, value) =
                     cypher.WithParam(paramName, value)
+
+                debug ("Create relation: " + x.CypherExprForCreate)
 
                 if isUnique then
                     cypher.CreateUnique(x.CypherExprForCreate)
@@ -157,7 +164,8 @@ module internal QuotationsHelpers =
     let inline (|IsNodeExpr|_|) expr: Option<NodeExpr> =
         match expr with
         | Var(var) -> Some (NodeExpr.Var(var))
-        | ValueWithName(value, typ, name) ->
+        | ValueWithName(value, typ, name)
+        | Coerce(ValueWithName(value, typ, name), _) ->
             // TODO denisok: extract constant
             let paramName = sprintf "__neo4jnode__%s" name
             let cypherExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
