@@ -1,13 +1,6 @@
 ﻿module Neo4jClient.FsQuotations.Tests.GrammarTests
 
-open System.Reflection
-open System.Linq.Expressions
-open Microsoft.FSharp.Linq.RuntimeHelpers
-open Microsoft.FSharp.Linq.RuntimeHelpers.LeafExpressionConverter
-open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Quotations
-open Microsoft.FSharp.Quotations.DerivedPatterns
-open Microsoft.FSharp.Quotations.ExprShape
 open Microsoft.FSharp.Quotations.Patterns
 open NUnit.Framework
 open Neo4jClient.FsQuotations
