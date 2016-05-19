@@ -44,6 +44,7 @@ module internal QuotationsHelpers =
             | Var(_var) -> None
             | NamedValue(_, paramName, value) -> Some (paramName, value)
             | Anonymous(_) -> None
+
         member x.Create(cypher: ICypherFluentQuery) =
             match x with
             | Var(_var) -> cypher.Create(x.CypherExpr)
@@ -123,7 +124,7 @@ module internal QuotationsHelpers =
                 let withParamFolder (cypher: ICypherFluentQuery) (paramName, value) =
                     cypher.WithParam(paramName, value)
 
-                debug ("Create relation: " + x.CypherExprForCreate)
+                debug "Create relation: %s" x.CypherExprForCreate
 
                 if isUnique then
                     cypher.CreateUnique(x.CypherExprForCreate)
@@ -172,7 +173,7 @@ module internal QuotationsHelpers =
             Some (NodeExpr.NamedValue(cypherExpr, paramName, value))
         | DeclareNodeCall(nodeType) -> Some (NodeExpr.Anonymous(nodeType))
         | _ ->
-            debug (string expr)
+            debug "%O" expr
             None
 
     let inline (|IsRelExpr|_|) expr: Option<RelExpr> =
@@ -183,14 +184,14 @@ module internal QuotationsHelpers =
             let cypherExpr = sprintf "[:%s]" typ.Name
             Some (RelExpr.TypedPattern(cypherExpr))
         | _ ->
-            debug (string expr)
+            debug "%O" expr
             None
 
     let inline (|CreateNodeCall|_|) (callExpr: Expr) =
         match callExpr with
         | SpecificCall <@ createNode @>
             (_, _, [IsNodeExpr(NodeExpr.NamedValue _ as nodeExpr)]) ->
-            printfn "Create node: %A" nodeExpr
+            debug "Create node: %A" nodeExpr
             Some nodeExpr
         | _ -> None
 
