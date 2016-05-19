@@ -27,6 +27,7 @@ module internal QuotationsHelpers =
     [<NoComparison>]
     type NodeExpr =
         | Var of var:Var
+        // TODO denisok: this representation is totally impractical: total loss of information
         | NamedValue of cypherExpr:string * paramName:string * value:obj
         | Anonymous of typ:Type
         member x.CypherExprForCreate =
@@ -51,6 +52,38 @@ module internal QuotationsHelpers =
             | NamedValue(cypherExpr, paramName, value) ->
                 cypher.Create(cypherExpr).WithParam(paramName, value)
             | Anonymous(_) -> failwith "Can't create anonymous nodes"
+
+        member x.Merge(cypher: ICypherFluentQuery) =
+            match x with
+            | NamedValue(_cypherExpr, paramName, value) ->
+                match NodeExpr.TryFindNeo4jKey value with
+                | Some (keyName, keyValue) ->
+                    let mergeExpr =
+                        sprintf
+                            "(%s:%s {%s: %A})"
+                            paramName (value.GetType().Name) keyName keyValue
+
+                    cypher.Merge(mergeExpr)
+                          .OnCreate()
+                          .Set(sprintf "%s = {__arg}" paramName)
+                          .WithParam("__arg", value)
+                | None -> failwith "Value should have a unique Neo4jKey attribute"
+
+            | Var(_) -> failwith "Can't merge node whose value is unknown before running the query"
+            | Anonymous(_) -> failwith "Can't merge anonymous nodes"
+
+        static member private TryFindNeo4jKey (entity: obj) =
+            let properties = entity.GetType().GetProperties()
+            properties
+            |> Array.tryPick (fun prop ->
+                prop.CustomAttributes
+                |> Seq.tryPick (fun attr ->
+                    if attr.AttributeType = typeof<Neo4jKeyAttribute> then
+                        Some (prop.Name, prop.GetValue(entity))
+                    else
+                        None
+                )
+            )
 
     [<RequireQualifiedAccess>]
     [<NoComparison>]
@@ -162,6 +195,19 @@ module internal QuotationsHelpers =
         | SpecificCall <@ declareRelationship @> (_, [relType], _) -> Some relType
         | _ -> None
 
+    let (|PropertyGetChain|_|) (expr: Expr) =
+        let rec impl (expr: Expr) =
+            match expr with
+            | PropertyGet(Some (PropertyGet _ as propChain), propInfo, []) ->
+                impl propChain
+                |> Option.map (fun (entity, chain) -> entity, propInfo.Name :: chain)
+            | PropertyGet(Some (Var instance), propInfo, []) ->
+                Some (instance, [propInfo.Name])
+            | _ -> None
+
+        impl expr
+        |> Option.map (fun (entity, propChain) -> entity, List.rev propChain)
+
     let inline (|IsNodeExpr|_|) expr: Option<NodeExpr> =
         match expr with
         | Var(var) -> Some (NodeExpr.Var(var))
@@ -172,6 +218,7 @@ module internal QuotationsHelpers =
             let cypherExpr = sprintf "(%s:%s {%s})" name typ.Name paramName
             Some (NodeExpr.NamedValue(cypherExpr, paramName, value))
         | DeclareNodeCall(nodeType) -> Some (NodeExpr.Anonymous(nodeType))
+        | PropertyGet(None, propInfo, []) -> Some (NodeExpr.NamedValue("", propInfo.Name, propInfo.GetValue(null)))
         | _ ->
             debug "%O" expr
             None
@@ -192,6 +239,14 @@ module internal QuotationsHelpers =
         | SpecificCall <@ createNode @>
             (_, _, [IsNodeExpr(NodeExpr.NamedValue _ as nodeExpr)]) ->
             debug "Create node: %A" nodeExpr
+            Some nodeExpr
+        | _ -> None
+
+    let inline (|MergeNodeCall|_|) (callExpr: Expr) =
+        match callExpr with
+        | SpecificCall <@ mergeNode @>
+            (_, _, [IsNodeExpr(NodeExpr.NamedValue _ as nodeExpr)]) ->
+            debug "Merge node: %A" nodeExpr
             Some nodeExpr
         | _ -> None
 
@@ -253,19 +308,6 @@ module internal QuotationsHelpers =
         match callExpr with
         | SpecificCall <@ returnResults @> (_,_,[returnArg]) -> Some returnArg
         | _ -> None
-
-    let (|PropertyGetChain|_|) (expr: Expr) =
-        let rec impl (expr: Expr) =
-            match expr with
-            | PropertyGet(Some (PropertyGet _ as propChain), propInfo, []) ->
-                impl propChain
-                |> Option.map (fun (entity, chain) -> entity, propInfo.Name :: chain)
-            | PropertyGet(Some (Var instance), propInfo, []) ->
-                Some (instance, [propInfo.Name])
-            | _ -> None
-
-        impl expr
-        |> Option.map (fun (entity, propChain) -> entity, List.rev propChain)
 
     let (|IsOperand|_|) (expr: Expr) =
         match expr with
@@ -447,6 +489,7 @@ module QuotationInterpreter =
 
     let private executeMerge (cypher: ICypherFluentQuery) mergeExpr =
         match mergeExpr with
+        | MergeNodeCall nodeExpr -> nodeExpr.Merge(cypher)
         | MergeRelationCall patternExpr -> patternExpr.Merge(cypher)
         | _ -> unsupportedScenario "MERGE expression" mergeExpr
 
@@ -522,6 +565,8 @@ module QuotationInterpreter =
             match query with
             // Create node
             | CreateNodeCall(_) as createExpr -> Choice1Of2 (executeCreate cypher createExpr)
+            // TODO denisok: this is not good: useful data should be extracted -> the ActivePatterns are executed many times
+            | MergeNodeCall(_) as mergeExpr -> Choice1Of2 (executeMerge cypher mergeExpr)
             | Sequential(CreateNodeCall(_) as createExpr, rest) ->
                 let newCypher = executeCreate cypher createExpr
                 impl newCypher rest
