@@ -45,6 +45,7 @@ module CypherGrammar =
     let createRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createUniqueLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let createUniqueRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
+    let mergeNode (_:#INeo4jNode) = ()
     let mergeLeftRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let mergeRightRelation (_:#INeo4jNode) (_:#INeo4jRelationship) (_:#INeo4jNode) = ()
     let deleteNode (_: 'T when 'T :> INeo4jNode) = ()
