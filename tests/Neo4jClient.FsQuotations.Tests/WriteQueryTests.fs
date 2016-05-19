@@ -1,9 +1,18 @@
 ﻿module Neo4jClient.FsQuotations.Tests.WriteQueryTests
 
 open System
-open NUnit.Framework
 open Neo4jClient
 open Neo4jClient.FsQuotations
+open NUnit.Framework
+open FsUnit
+
+[<AutoOpen>]
+module ModuleJustDefinedForTesting =
+    [<CLIMutable>]
+    type NoKeyAttributeNode =
+        { Dummy: string }
+        interface INeo4jNode
+
 
 [<SetUp>]
 let setupDbWithTestData () =
@@ -207,3 +216,35 @@ let ``Merge left/right relationship`` () =
 
         clearAllRelations neo4jClient
         clearAllNodes neo4jClient
+
+[<Test>]
+let ``Merge node fails when no Neo4jKey attribute is present`` () =
+    let noKeyAttributeNode = { Dummy = "ABCD" }
+
+    (fun () ->
+        <@ mergeNode noKeyAttributeNode @>
+        |> executeWriteQuery neo4jClient.Cypher
+    )
+    |> should throw typeof<Exception>
+
+[<Test>]
+let ``Merge node`` () =
+    // Arrange
+    let denisNode: UserNode = { FacebookId = "Denis" }
+
+    // Act
+    for _ in 1 .. 3 do
+        <@ mergeNode denisNode @>
+        |> executeWriteQuery neo4jClient.Cypher
+
+    // Assert
+    let nodeCount = 
+        <@
+        let user = declareNode<UserNode>
+        matchNode user
+        returnResults user
+        @>
+        |> executeReadQuery neo4jClient.Cypher
+        |> Seq.length
+
+    nodeCount |> should equal 1
