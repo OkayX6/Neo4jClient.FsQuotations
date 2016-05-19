@@ -3,3 +3,4 @@ Newtonsoft.Json
 group Test
 NUnit
 NUnit.Runners
+FsUnit
