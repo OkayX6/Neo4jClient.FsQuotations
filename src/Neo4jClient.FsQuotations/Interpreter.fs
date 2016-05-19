@@ -16,9 +16,9 @@ open Neo4jClient.Cypher
 module internal QuotationsHelpers =
 
     #if INTERACTIVE
-    let debug s = printfn "[Debug] %s" s
+    let debug format = Printf.kprintf (printfn "[Debug] %s") format
     #else
-    let debug (_: string) = ()
+    let debug format = Printf.kprintf ignore format
     #endif
 
     let fsQuotationAssembly = matchNode.GetType().DeclaringType.Assembly
