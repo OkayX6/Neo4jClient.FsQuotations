@@ -1,7 +1,6 @@
 ﻿#r @"..\..\packages\Neo4jClient\lib\net45\Neo4jClient.dll"
 
 #load "StringUtils.fs"
-      "Cypher.fs"
       "TypeAnnotations.fs"
       "CypherGrammar.fs"
       "Interpreter.fs"

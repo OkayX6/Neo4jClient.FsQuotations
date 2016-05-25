@@ -14,6 +14,8 @@ open Neo4jClient.Cypher
 
 [<AutoOpen>]
 module internal QuotationsHelpers =
+    let inline raiseNeo4jNodeTypeExceptionFromType (typeinfo: Type) =
+        raise (ArgumentException(sprintf "The '%s' type must define a (unique) property with 'Neo4jKeyAttribute'" typeinfo.FullName))
 
     #if INTERACTIVE
     let debug format = Printf.kprintf (printfn "[Debug] %s") format
@@ -67,7 +69,7 @@ module internal QuotationsHelpers =
                           .OnCreate()
                           .Set(sprintf "%s = {__arg}" paramName)
                           .WithParam("__arg", value)
-                | None -> failwith "Value should have a unique Neo4jKey attribute"
+                | None -> raiseNeo4jNodeTypeExceptionFromType (value.GetType())
 
             | Var(_) -> failwith "Can't merge node whose value is unknown before running the query"
             | Anonymous(_) -> failwith "Can't merge anonymous nodes"

@@ -225,7 +225,7 @@ let ``Merge node by key fails when no Neo4jKey attribute is present`` () =
         <@ mergeNodeByKey noKeyAttributeNode @>
         |> executeWriteQuery neo4jClient.Cypher
     )
-    |> should throw typeof<Exception>
+    |> should throw typeof<ArgumentException>
 
 [<Test>]
 let ``Merge node by key`` () =
