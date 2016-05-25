@@ -244,7 +244,7 @@ module internal QuotationsHelpers =
 
     let inline (|MergeNodeCall|_|) (callExpr: Expr) =
         match callExpr with
-        | SpecificCall <@ mergeNode @>
+        | SpecificCall <@ mergeNodeByKey @>
             (_, _, [IsNodeExpr(NodeExpr.NamedValue _ as nodeExpr)]) ->
             debug "Merge node: %A" nodeExpr
             Some nodeExpr

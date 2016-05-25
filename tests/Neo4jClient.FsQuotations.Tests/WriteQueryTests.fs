@@ -218,23 +218,23 @@ let ``Merge left/right relationship`` () =
         clearAllNodes neo4jClient
 
 [<Test>]
-let ``Merge node fails when no Neo4jKey attribute is present`` () =
+let ``Merge node by key fails when no Neo4jKey attribute is present`` () =
     let noKeyAttributeNode = { Dummy = "ABCD" }
 
     (fun () ->
-        <@ mergeNode noKeyAttributeNode @>
+        <@ mergeNodeByKey noKeyAttributeNode @>
         |> executeWriteQuery neo4jClient.Cypher
     )
     |> should throw typeof<Exception>
 
 [<Test>]
-let ``Merge node`` () =
+let ``Merge node by key`` () =
     // Arrange
     let denisNode: UserNode = { FacebookId = "Denis" }
 
     // Act
     for _ in 1 .. 3 do
-        <@ mergeNode denisNode @>
+        <@ mergeNodeByKey denisNode @>
         |> executeWriteQuery neo4jClient.Cypher
 
     // Assert
